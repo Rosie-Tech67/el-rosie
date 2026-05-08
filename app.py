@@ -6,10 +6,13 @@ import urllib.parse
 from datetime import datetime
 import random
 import os
-
+from flask_sqlalchemy import SQLAlchemy # (assuming you are using this)
 
 app = Flask(__name__)
 
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'users.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'el_rosie_local_dev_key')
 
 app.permanent_session_lifetime = timedelta(days=31)
@@ -214,22 +217,20 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
         
-        # Check if the user exists in your USER_DATABASE
-        if email in USER_DATABASE and USER_DATABASE[email]['password'] == password:
+        # 1. Look for the user in the ACTUAL Database file, not a dictionary
+        user = User.query.filter_by(email=email).first()
+        
+        # 2. Check if user exists AND the password matches
+        if user and user.password == password: 
             session.permanent = True
-            session['user'] = email
-            session['role'] = USER_DATABASE[email]['role']
+            session['user'] = user.email
+            session['role'] = user.role
             
             flash(f"Welcome back to El Rosie!", "success")
             
-            # --- START OF FIX ---
-            # If the user is an admin, send them to the dashboard
             if session['role'] == 'admin':
                 return redirect(url_for('admin_dashboard'))
-            
-            # Otherwise, send regular customers to the home page
-            return redirect(url_for('home')) 
-            # --- END OF FIX ---
+            return redirect(url_for('home'))
             
         else:
             flash("Invalid email or password. Please try again.", "danger")
@@ -322,12 +323,31 @@ def scan_qr(booking_id):
             
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        # Create the user object
+        new_user = User(email=email, password=password, role='customer')
+        
+        # SAVE IT TO THE FILE
+        db.session.add(new_user)
+        db.session.commit() # <--- This "inks" the whiteboard so it can't be erased!
+        
+        flash("Account created! You can now login.", "success")
+        return redirect(url_for('login'))
+    return render_template('signup.html')
 
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('home'))
+
+with app.app_context():
+    db.create_all()  # This forces Render to build the database table if it's missing
 
 if __name__ == '__main__':
     # '0.0.0.0' tells Flask to be visible on your local network
