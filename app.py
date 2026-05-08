@@ -39,9 +39,8 @@ class User(db.Model):
 # ==========================================
 
 @app.route('/')
-def home():
-    # Make sure your main html file is named 'index.html' or change this line
-    return render_template('index.html')
+def index():  # <--- Change 'home' to 'index' here
+    return render_template('index.html') # <--- This matches your file name
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
