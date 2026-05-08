@@ -5,9 +5,13 @@ from flask_mail import Mail, Message
 import urllib.parse
 from datetime import datetime
 import random
+import os
+
 
 app = Flask(__name__)
-app.secret_key = "el_rosie_secret_secure_key"
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'el_rosie_local_dev_key')
+
 app.permanent_session_lifetime = timedelta(days=31)
 
 # --- EMAIL CONFIGURATION ---
