@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>El Rosie - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div style="max-width: 400px; margin: 100px auto; padding: 20px; border: 1px solid #705335; border-radius: 8px; font-family: sans-serif; background-color: #fff;">
+        <h2 style="color: #705335; text-align: center;">El Rosie Portal Login</h2>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div style="padding: 10px; margin-bottom: 15px; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; text-align: center;">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        
+        <form action="{{ url_for('login') }}" method="POST">
+            <div style="margin-bottom: 15px;">
+                <label style="font-weight: bold; color: #333;">I am logging in as:</label>
+                <select name="role" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                    <option value="customer">Customer</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-weight: bold; color: #333;">Email Address</label>
+                <input type="email" name="email" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="font-weight: bold; color: #333;">Password</label>
+                <input type="password" name="password" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+            </div>
+
+            <button type="submit" style="background-color: #705335; color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-size: 16px; font-weight: bold; border-radius: 4px;">
+                Login
+            </button>
+        </form>
+    </div>
+</body>
+</html>ss

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reserve Your Stay</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">ָ. ..𓂃 ࣪ ִֶָ🌊་༘࿐El Rosie Beach Resort</div>
+        <nav>
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('gallery') }}">Gallery</a>
+            <a href="{{ url_for('activities') }}">Activities</a>
+            <a href="{{ url_for('login') }}">Login / Sign Up</a>
+            <a href="{{ url_for('book') }}" class="btn-book active">Book Now</a>
+        </nav>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert-flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <h1 class="section-header-title">Reserve Your Stay</h1>
+
+    <main class="booking-container">
+        <div class="booking-form-section">
+            <form action="{{ url_for('book') }}" method="POST" id="bookingForm">
+                <h3 style="color: #705335; margin-bottom: 15px; border-bottom: 2px solid #e0d0c0; padding-bottom: 5px;">Guest Contact Information</h3>
+                
+                <div class="form-group-block" style="margin-bottom: 15px;">
+                    <label>Full Name</label>
+                    <input type="text" name="guest_name" placeholder="John Doe" value="{{ request.form.get('guest_name', '') }}" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                </div>
+
+                <div class="form-row-split" style="margin-bottom: 25px;">
+                    <div class="form-group-block">
+                        <label>Contact Number</label>
+                        <input type="tel" name="guest_phone" placeholder="+63 912 345 6789" value="{{ request.form.get('guest_phone', '') }}" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group-block">
+                        <label>Email Address</label>
+                        <input type="email" name="guest_email" placeholder="johndoe@email.com" value="{{ request.form.get('guest_email', '') }}" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <h3 style="color: #705335; margin-bottom: 15px; border-bottom: 2px solid #e0d0c0; padding-bottom: 5px;">Reservation Preferences</h3>
+
+                <div class="form-row-split">
+                    <div class="form-group-block">
+                        <label>Check-in</label>
+                        <input type="date" name="check_in" value="{{ request.form.get('check_in', '2026-06-01') }}" onchange="document.getElementById('bookingForm').submit();">
+                    </div>
+                    <div class="form-group-block">
+                        <label>Check-out</label>
+                        <input type="date" name="check_out" value="{{ request.form.get('check_out', '2026-06-05') }}" onchange="document.getElementById('bookingForm').submit();">
+                    </div>
+                </div>
+
+                <div class="form-row-split">
+                    <div class="form-group-block">
+                        <label>Adults</label>
+                        <select name="adults" onchange="document.getElementById('bookingForm').submit();">
+                            <option value="1" {% if request.form.get('adults') == '1' %}selected{% endif %}>1</option>
+                            <option value="2" {% if request.form.get('adults') == '2' %}selected{% endif %}>2</option>
+                        </select>
+                    </div>
+                    <div class="form-group-block">
+                        <label>Children</label>
+                        <select name="children" onchange="document.getElementById('bookingForm').submit();">
+                            <option value="0" {% if request.form.get('children') == '0' %}selected{% endif %}>0</option>
+                            <option value="1" {% if request.form.get('children') == '1' %}selected{% endif %}>1</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group-block">
+                    <label>Room Selection</label>
+                    <select name="room_type" required>
+                        {% for room_id, info in room_prices.items() %}
+                            {% set remaining = availability[room_id] %}
+                            <option value="{{ room_id }}" {% if remaining <= 0 %}disabled{% endif %}>
+                                {{ info.name }} - ₱{{ info.price }} 
+                                ({{ remaining }} left) {% if remaining <= 0 %} [SOLD OUT] {% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group-block">
+                    <label>Add-ons (Optional)</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="addons" value="spa" id="spa" {% if 'spa' in request.form.getlist('addons') %}checked{% endif %} onchange="document.getElementById('bookingForm').submit();">
+                        <label for="spa">Relaxing Spa Package (₱50 / adult)</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" name="addons" value="tours" id="tours" {% if 'tours' in request.form.getlist('addons') %}checked{% endif %} onchange="document.getElementById('bookingForm').submit();">
+                        <label for="tours">Island Tour Pass (₱100 / adult)</label>
+                    </div>
+                </div>
+
+                <div class="form-group-block" style="margin-top: 20px; margin-bottom: 20px;">
+                    <label for="special_notes">Staff Notes and Special Requests</label>
+                    <textarea name="special_notes" id="special_notes" rows="3" 
+                        placeholder="e.g., It's my wife's birthday, please put flowers in the room."
+                        style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; resize: vertical;">{{ request.form.get('special_notes', '') }}</textarea>
+                </div>
+                
+                <input type="hidden" name="confirm_booking" value="" id="isConfirm">
+                <button type="button" class="btn-submit-booking" onclick="document.getElementById('isConfirm').value='true'; document.getElementById('bookingForm').submit();">Confirm Booking</button>
+            </form>
+        </div>
+
+        <aside class="summary-panel-card">
+            <div style="background-color: #fdf6e3; border-left: 5px solid #d4a373; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: left;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 24px; color: #705335;">
+                        <i class="fas fa-{{ weather.icon }}"></i>
+                    </div>
+                    <div>
+                        <span style="font-size: 11px; font-weight: bold; color: #705335; text-transform: uppercase; letter-spacing: 1px;">
+                            El Rosie Smart Suggestion ({{ weather.temp }}°C)
+                        </span>
+                        <p style="margin: 5px 0 0; color: #5d4037; font-size: 14px; line-height: 1.4;">
+                            {{ weather.text }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reservation-summary">
+                <h3 style="color: #705335; border-bottom: 1px solid #e0d0c0; padding-bottom: 10px;">Reservation Summary</h3>
+                <p><strong>Calculated Nights:</strong> {{ days }}</p>
+                <p><strong>Total Cost:</strong> ₱{{ total_cost }}</p> 
+            </div>
+
+            {% if qr_code_url %}
+            <div style="background-color: white; color: #333; padding: 15px; border-radius: 6px; text-align: center; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+                <h4 style="color: #705335; margin: 0 0 10px 0; font-size: 1.1rem;">Your Resort Gate Pass</h4>
+                <p style="font-size: 0.8rem; margin-bottom: 10px; color: #666;">Present this QR code ticket at counter arrival checkout:</p>
+                <img src="{{ qr_code_url }}" alt="Resort Booking QR Ticket" style="border: 1px solid #eee; padding: 5px; background: #fff; width: 160px; height: 160px;">
+                <div style="font-family: monospace; font-weight: bold; margin-top: 8px; color: #705335; font-size: 0.9rem;">Gate Entry Approved</div>
+            </div>
+            {% endif %}
+        </aside>
+    </main>
+</body>
+</html>

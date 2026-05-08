@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gallery & Accommodations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo-container">ָ. ..𓂃 ࣪ ִֶָ🌊་༘࿐El Rosie Beach Resort</div>
+        <nav>
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('gallery') }}" class="active">Gallery</a>
+            <a href="{{ url_for('activities') }}">Activities</a>
+            <a href="{{ url_for('book') }}" class="btn-book">Book Now</a>
+        </nav>
+    </header>
+
+    <h1 class="section-header-title">Gallery: Capture Your Paradise</h1>
+    <div class="gallery-matrix">
+        <div class="fallback-img-box">
+            <img src="https://i.pinimg.com/736x/d5/d0/a1/d5d0a139dd53fb737837b37b088bc1bb.jpg" alt="Interior Room">
+        </div>
+        <div class="fallback-img-box">
+            <img src="https://i.pinimg.com/1200x/4e/02/cc/4e02ccb7dfd368ff4bae34d37f5795db.jpg" alt="Beachside Dining">
+        </div>
+        <div class="fallback-img-box">
+            <img src="https://i.pinimg.com/1200x/73/9d/e4/739de4ad40a261e8f0e205b43a4e3e7d.jpg" alt="Water Sports">
+        </div>
+        <div class="fallback-img-box">
+            <img src="https://i.pinimg.com/1200x/b1/89/b4/b189b4fbc29770e4d51bf2fc2aa9a3b8.jpg" alt="Marine Reef">
+        </div>
+        <div class="fallback-img-box">
+            <img src="https://i.pinimg.com/1200x/1b/7a/df/1b7adf6eb91ac68fcdc9b3cdb146fa7f.jpg" alt="Therapy Spa">
+        </div>
+        <div class="fallback-img-box">
+            <img src="https://i.pinimg.com/1200x/d3/e1/32/d3e1325e7d56c93ceef3b5fb26a41456.jpg" alt="Therapy Spa">
+        </div>
+        <div class="fallback-img-box">
+            <img src="https://i.pinimg.com/736x/fe/8a/de/fe8ade411ad1425ef950abfe6f6155f7.jpg" alt="Therapy Spa">
+        </div>
+        <div class="fallback-img-box">
+            <img src="https://i.pinimg.com/1200x/9a/70/41/9a7041ec50caf700259e2fe287d554ec.jpg" alt="Therapy Spa">
+        </div>
+        <div class="fallback-img-box">
+            <img src="https://i.pinimg.com/736x/3b/7c/21/3b7c21634cb86844db3c3d469a5b0f78.jpg" alt="Therapy Spa">
+        </div>
+    </div>
+
+    <h1 class="section-header-title">Accommodation Options</h1>
+    <div class="accommodation-matrix">
+        
+        <div class="room-display-card">
+            <div class="room-details">
+                <h3>Deluxe Bungalow: A private retreat</h3>
+                <ul>
+                    <li>King Bed</li>
+                    <li>Private Balcony</li>
+                    <li>Wi-Fi</li>
+                    <li>Tower Balcony</li>
+                    <li>Connections</li>
+                </ul>
+                <div class="room-price-tag">₱3500 / night</div>
+                 <a href="/book" class="book-btn">Book Now</a>
+            </div>
+            <img src="https://i.pinimg.com/736x/24/20/92/24209268ae9640de623783e7731a010c.jpg" alt="Deluxe Bungalow" class="room-card-img">
+        </div>
+
+        <div class="room-display-card">
+            <div class="room-details">
+                <h3>Ocean View Suite: Modern comfort</h3>
+                <ul>
+                    <li>King Bed</li>
+                    <li>Private Balcony</li>
+                    <li>Wi-Fi</li>
+                    <li>Tours Balcony</li>
+                    <li>Connections</li>
+                </ul>
+                <div class="room-price-tag">₱2500 / night</div>
+                 <a href="/book" class="book-btn">Book Now</a>
+            </div>
+            <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600" alt="Ocean View Suite" class="room-card-img">
+        </div>
+
+        <div class="room-display-card">
+            <div class="room-details">
+                <h3>Beachfront Glamping: Luxury under the stars</h3>
+                <ul>
+                    <li>Queen-size Luxury Bed</li>
+                    <li>Private Ocean-facing Deck</li>
+                    <li>Star-gazing Skylight Dome</li>
+                    <li>Wi-Fi & Premium Amenities</li>
+                </ul>
+                <div class="room-price-tag">₱1800 / night</div>
+                 <a href="/book" class="book-btn">Book Now</a>
+            </div>
+            <img src="https://i.pinimg.com/736x/74/4a/d3/744ad3b89e46f6eb96bc79b37a685438.jpg" alt="Beachfront Glamping" class="room-card-img">
+        </div>
+
+        <div class="room-display-card">
+            <div class="room-details">
+                <h3>Family Garden Villa: Spacious space for loved ones</h3>
+                <ul>
+                    <li>2 King Beds & Separate Living Area</li>
+                    <li>Private Botanical Garden Patio</li>
+                    <li>Fully-equipped Kitchenette</li>
+                    <li>Wi-Fi & Connections</li>
+                </ul>
+                <div class="room-price-tag">₱4500 / night</div>
+                 <a href="/book" class="book-btn">Book Now</a>
+            </div>
+            <img src="https://i.pinimg.com/1200x/b4/bb/46/b4bb4675ae47997c96533e182912b3c1.jpg" alt="Family Garden Villa" class="room-card-img">
+        </div>
+
+        <div class="room-display-card">
+            <div class="room-details">
+                <h3>Presidential Penthouse: The ultimate elite escape</h3>
+                <ul>
+                    <li>Panoramic 360° Ocean Views</li>
+                    <li>Private Infinity Edge Plunge Pool</li>
+                    <li>24/7 Dedicated Butler Service</li>
+                    <li>VIP Lounge Access</li>
+                </ul>
+                <div class="room-price-tag">₱7500 / night</div>
+                  <a href="/book" class="book-btn">Book Now</a>
+            </div>
+            <img src="https://i.pinimg.com/736x/b3/23/bf/b323bff68cedac7134f4ba703f578689.jpg" alt="Presidential Penthouse" class="room-card-img">
+        </div>
+
+        <div class="room-display-card">
+    <div class="room-details">
+        <h3>Garden Cabin: Nature's Embrace</h3>
+        <ul>
+            <li>Queen Bed</li>
+            <li>Garden View</li>
+            <li>Wi-Fi</li>
+            <li>Outdoor Shower</li>
+            <li>Eco-friendly</li>
+        </ul>
+        <div class="room-price-tag">₱2800 / night</div>
+        <a href="/book" class="book-btn">Book Now</a>
+    </div>
+    <img src="https://i.pinimg.com/1200x/74/1c/f3/741cf3d728598a54695c28a7625cbb9a.jpg" alt="Garden Cabin" class="room-card-img">
+</div>
+
+<div class="room-display-card">
+    <div class="room-details">
+        <h3>Sunset Loft: Golden Hour Views</h3>
+        <ul>
+            <li>King Bed</li>
+            <li>Floor-to-ceiling Windows</li>
+            <li>Mini Bar</li>
+            <li>Smart TV</li>
+            <li>Telescope</li>
+        </ul>
+        <div class="room-price-tag">₱4200 / night</div>
+        <a href="/book" class="book-btn">Book Now</a>
+    </div>
+    <img src="https://i.pinimg.com/1200x/a2/34/fa/a234faa2bdc0f8636234d89e8f70a1f8.jpg" alt="Sunset Loft" class="room-card-img">
+</div>
+
+</div>
+    </div>
+</body>
+</html>

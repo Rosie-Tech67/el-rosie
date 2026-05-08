@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gate Pass Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #fbf9f6; }
+        .card { background: white; padding: 20px; border-radius: 15px; border: 2px solid #705335; }
+        .btn { width: 100%; padding: 20px; font-size: 20px; color: white; border: none; border-radius: 10px; cursor: pointer; margin-top: 20px; }
+        .check-in { background-color: #28a745; }
+        .check-out { background-color: #007bff; }
+        .status-tag { font-weight: bold; color: #705335; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>EL ROSIE GATE PASS</h2>
+        <p>Guest: <strong>{{ booking.name }}</strong></p>
+        <p>Current Status: <span class="status-tag">{{ booking.status }}</span></p>
+        <hr>
+
+        {% if booking.status == 'Pending' %}
+            <form action="/update_status/{{ booking.id }}/Checked-In" method="POST">
+                <button type="submit" class="btn check-in">✅ CONFIRM CHECK-IN</button>
+            </form>
+        {% elif booking.status == 'Checked-In' %}
+            <form action="/update_status/{{ booking.id }}/Checked-Out" method="POST">
+                <button type="submit" class="btn check-out">🔑 CONFIRM CHECK-OUT</button>
+            </form>
+        {% else %}
+            <h3 style="color: red;">GUEST HAS ALREADY CHECKED OUT</h3>
+        {% endif %}
+    </div>
+</body>
+</html>

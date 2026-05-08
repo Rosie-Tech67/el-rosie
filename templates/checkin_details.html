@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guest Check-In</title>
+    <style>
+        body { font-family: sans-serif; background: #fbf9f6; padding: 20px; text-align: center; }
+        .info-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: left; }
+        h2 { color: #705335; border-bottom: 2px solid #705335; padding-bottom: 10px; }
+        .label { font-weight: bold; color: #555; }
+        .check-in-btn { 
+            display: block; width: 100%; padding: 15px; margin-top: 20px;
+            background: #28a745; color: white; border: none; border-radius: 5px;
+            font-size: 18px; font-weight: bold; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>El Rosie Check-In</h1>
+    <div class="info-card">
+        <h2>Reservation #{{ booking.id }}</h2>
+        <p><span class="label">Guest:</span> {{ booking.name }}</p>
+        <p><span class="label">Contact:</span> {{ booking.phone }}</p>
+        <p><span class="label">Email:</span> {{ booking.email }}</p>
+        <p><span class="label">Room:</span> {{ booking.room }}</p>
+        <p><span class="label">Booked on:</span> {{ booking.timestamp }}</p>
+        
+        <form action="/confirm_checkin/{{ booking.id }}" method="POST">
+            <button type="submit" class="check-in-btn">✅ CONFIRM CHECK-IN</button>
+        </form>
+    </div>
+</body>
+</html>
