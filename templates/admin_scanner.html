@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin QR Scanner - El Rosie</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #fbf9f6; }
+        .container { max-width: 500px; margin: auto; }
+        #reader { border-radius: 15px; overflow: hidden; border: 2px solid #705335; }
+        .back-btn { margin-top: 20px; display: inline-block; color: #705335; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>SCAN GUEST QR CODE</h2>
+        <div id="reader"></div>
+        <a href="/admin/dashboard" class="back-btn">← Back to Dashboard</a>
+    </div>
+
+   <script>
+    function onScanSuccess(decodedText, decodedResult) {
+        // 1. Check if the decodedText already has a URL
+        // 2. Add the admin_direct mode so the server bypasses the secret code
+        let redirectUrl = decodedText;
+        
+        if (redirectUrl.includes('?')) {
+            redirectUrl += "&mode=admin_direct";
+        } else {
+            redirectUrl += "?mode=admin_direct";
+        }
+
+        // Redirect the admin to the Gate Pass URL automatically
+        window.location.href = redirectUrl;
+    }
+
+    function onScanFailure(error) {
+        // Silently handle scan failures/misses
+    }
+
+    // Initialize the scanner
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader", { fps: 10, qrbox: 250 });
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+</script>
+</body>
+</html>

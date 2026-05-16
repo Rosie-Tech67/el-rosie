@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rate Your Stay - El Rosie</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background-color: #fcf9f2; color: #5C3A21; }
+        .card { border: 1px solid #704214; border-radius: 12px; }
+        .btn-submit { background-color: #704214; color: white; font-weight: bold; }
+        .btn-submit:hover { background-color: #5C3A21; color: white; }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow p-4 text-center">
+                <h2>⭐ Share Your Experience ⭐</h2>
+                <p>We noticed you recently checked out of your stay (ID: {{ booking_id }}). We would love to hear how we did!</p>
+                <hr>
+                <form action="{{ url_for('leave_review', booking_id=booking_id) }}" method="POST">
+                    <div class="mb-4">
+                        <label class="form-label d-block fw-bold">Your Overall Rating:</label>
+                        <select name="rating" class="form-select form-select-lg text-center" required>
+                            <option value="5">⭐⭐⭐⭐⭐ (5/5 Excellence)</option>
+                            <option value="4">⭐⭐⭐⭐ (4/5 Very Good)</option>
+                            <option value="3">⭐⭐⭐ (3/5 Average)</option>
+                            <option value="2">⭐⭐ (2/5 Disappointing)</option>
+                            <option value="1">⭐ (1/5 Unacceptable)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Comments / Suggestions</label>
+                        <textarea name="comment" class="form-control" rows="4" placeholder="Tell us about the amenities, food, or staff service..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-submit w-100 py-2">Submit Review</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
