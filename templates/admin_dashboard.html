@@ -43,49 +43,55 @@
     
     <div class="stats-container">
         <div class="stat-box">
-            <h2>₱{{ revenue }}</h2>
+            <h2>Public Revenue Matrix</h2>
+            <h2>Encoding Element Not Provided</h2>
             <p>Total Revenue</p>
         </div>
         <div class="stat-box">
-            <h2>{{ count }}</h2>
+            <h2>Encoding Element Not Provided</h2>
             <p>Total Reservations</p>
         </div>
-        <div class="stat-box">
-            <h2>{{ active }}</h2>
-            <p>Guests In-Resort</p>
+        
+        <div class="stat-box" style="border-top: 4px solid #2ecc71;">
+            <h2 style="color: #2ecc71;">{{ in_resort }}</h2>
+            <p style="font-weight: bold;">🔴 Live: Guests In-Resort</p>
         </div>
+
+        <div class="stat-box" style="border-top: 4px solid #3498db;">
+            <h2 style="color: #3498db;">{{ expected }}</h2>
+            <p style="font-weight: bold;">📅 Expected Arrivals Today</p>
+        </div>
+
         <div class="stat-box">
-            <h2 style="font-size: 18px;">{{ popular }}</h2>
+            <h2 style="font-size: 18px;">Encoding Element Not Provided</h2>
             <p>Most Popular Room</p>
         </div>
 
         <div class="stat-box" style="border-top: 4px solid #3498db;">
             <div style="display: flex; align-items: center; justify-content: center; gap: 5px;">
-                <img src="http://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" width="45" alt="weather">
-                <h2 style="margin: 0; font-size: 24px;">{{ weather.temp }}°C</h2>
+                <img src="http://openweathermap.org/img/wn/Encoding Element Not Provided@2x.png" width="45" alt="weather">
+                <h2 style="margin: 0; font-size: 24px;">Encoding Element Not Provided°C</h2>
             </div>
-            <p style="font-weight: bold; margin: 5px 0; color: #3498db;">{{ weather.desc }}</p>
-            <p style="font-size: 11px; font-style: italic; color: #666;">{{ weather.advice }}</p>
+            <p style="font-weight: bold; margin: 5px 0; color: #3498db;">Encoding Element Not Provided</p>
+            <p style="font-size: 11px; font-style: italic; color: #666;">Encoding Element Not Provided</p>
         </div>
     </div>
 
-    <!-- Add this section right after your stats-container and before the 🛎️ Active Guest Bookings heading -->
-
-<div style="display: flex; gap: 10px; margin-bottom: 20px;">
-    <a href="/admin/scanner" style="
-        background-color: #705335; 
-        color: white; 
-        padding: 12px 24px; 
-        text-decoration: none; 
-        border-radius: 8px; 
-        font-weight: bold; 
-        display: flex; 
-        align-items: center; 
-        gap: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        📷 OPEN QR SCANNER
-    </a>
-</div>
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <a href="/admin/scanner" style="
+            background-color: #705335; 
+            color: white; 
+            padding: 12px 24px; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            📷 OPEN QR SCANNER
+        </a>
+    </div>
 
     <hr>
 
@@ -104,12 +110,12 @@
             </tr>
         </thead>
         <tbody>
-            {% for booking in active_bookings %}
+            {% for booking in bookings %}
             <tr id="row-{{ booking.id }}">
                 <td>{{ booking.id }}</td>
                 <td>{{ booking.name }}</td>
                 <td>
-                    <span class="status-badge {{ 'bg-success' if booking.status == 'Checked-In' else 'bg-warning' }}">
+                    <span class="status-badge {{ 'bg-success' if booking.status == 'In-Resort' or booking.status == 'Checked-In' else 'bg-warning' }}">
                         {{ booking.status }}
                     </span>
                 </td>

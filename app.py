@@ -275,7 +275,7 @@ from collections import Counter
 
 @app.route('/explore')
 def explore():
-    # Structural facility data passed to render dynamically
+    # Complete structural dataset needed for Jinja loops
     resort_guide = {
         "amenities": [
             {"title": "🏊 Infinity Pool", "hours": "6:00 AM - 10:00 PM", "rules": "Proper swimwear required. No glassware near the deck."},
@@ -284,25 +284,33 @@ def explore():
         ],
         "menus": {
             "breakfast": ["Filipino Silog Plates (₱250)", "Fluffy Pancakes with Mango Syrup (₱180)", "Fresh Brewed Kapeng Barako (₱90)"],
-            "dinner": ["Signature Grilled Seafood Platter (₱850)", "Crispy Pork Pork Belly Lechon (₱420)", "Tropical Mango Graham Shakes (₱150)"]
+            "dinner": ["Signature Grilled Seafood Platter (₱850)", "Crispy Pork Belly Lechon (₱420)", "Tropical Mango Graham Shakes (₱150)"]
         }
     }
+    # CRITICAL: Pass resort_guide as 'guide' so explore.html can read it!
     return render_template('explore.html', guide=resort_guide)
-
 @app.route('/admin/dashboard')
 def admin_dashboard():
     if session.get('role') == 'admin':
-        # --- Your Existing Logic ---
+        # --- Revenue and Reservation Analytics ---
         total_revenue = sum(b['total_paid'] for b in BOOKINGS_DB) + sum(b['total_paid'] for b in BOOKING_HISTORY)
         total_bookings = len(BOOKINGS_DB) + len(BOOKING_HISTORY)
-        active_guests = len([b for b in BOOKINGS_DB if b['status'] == 'Checked-In'])
         recent_history = BOOKING_HISTORY[::-1] 
+        
+        # --- Popular Room Trackers ---
         room_list = [b['room'] for b in BOOKINGS_DB] + [b['room'] for b in BOOKING_HISTORY]
         popular_room = Counter(room_list).most_common(1)[0][0] if room_list else "None"
         
-        # --- NEW: Weather Integration ---
+        # --- NEW: Live Guest Occupancy Counting Metrics ---
+        # 1. Count guests currently marked active "In-Resort" or "Checked-In"
+        in_resort_count = sum(1 for b in BOOKINGS_DB if b.get('status') in ['In-Resort', 'Checked-In'])
+        
+        # 2. Count incoming bookings today that are confirmed or pending arrivals
+        expected_today = sum(1 for b in BOOKINGS_DB if b.get('status') in ['Confirmed', 'Pending'])
+        
+        # --- Weather Integration ---
         try:
-            # Using Nasugbu as the location for El Rohi
+            # Using Nasugbu as the location for El Rosie
             api_key = "bc58679904d9c02d137021c3272d3f9e" 
             url = f"http://api.openweathermap.org/data/2.5/weather?q=Nasugbu&appid={api_key}&units=metric"
             data = requests.get(url, timeout=5).json()
@@ -328,15 +336,41 @@ def admin_dashboard():
             # Fallback so the dashboard doesn't crash if the internet is down
             weather_info = {"temp": "30", "desc": "Sunny", "icon": "01d", "advice": "Standard Operations"}
 
+        # Return and pass all synchronized analytical parameters to your dashboard template
         return render_template('admin_dashboard.html', 
                                active_bookings=BOOKINGS_DB,
+                               bookings=BOOKINGS_DB,
                                history=recent_history,
                                revenue=total_revenue,
                                count=total_bookings, 
-                               active=active_guests, 
+                               in_resort=in_resort_count, 
+                               expected=expected_today,
                                popular=popular_room,
-                               weather=weather_info) # Passing new data to HTML
+                               weather=weather_info)
+                               
     return redirect(url_for('login'))
+
+@app.route('/catalog')
+def catalog():
+    # Structural rates directory passed dynamically
+    catalog_data = {
+        "pool_access": [
+            {"type": "Day Swim (8:00 AM - 5:00 PM)", "adult": "₱150", "child": "₱100"},
+            {"type": "Night Swim (6:00 PM - 12:00 AM)", "adult": "₱200", "child": "₱120"}
+        ],
+        "cottages": [
+            {"name": "Nipa Hut Cottage (Small)", "capacity": "6-8 Pax", "rate": "₱800"},
+            {"name": "Bamboo Pavilion (Medium)", "capacity": "12-15 Pax", "rate": "₱1,500"},
+            {"name": "Executive Poolside Cabana", "capacity": "20 Pax", "rate": "₱3,000"}
+        ],
+        "corkage_fees": [
+            {"item": "Local Beers / Hard Liquor", "fee": "₱200 per case"},
+            {"item": "Catering / Outside Food Setup", "fee": "₱500 flat rate"},
+            {"item": "Whole Lechon / Roasted Pig", "fee": "₱300 per item"}
+        ]
+    }
+    return render_template('catalog.html', catalog=catalog_data)
+
 @app.route('/authorize_staff/<secret>')
 def authorize_staff(secret):
     if secret == STAFF_SECRET_CODE:

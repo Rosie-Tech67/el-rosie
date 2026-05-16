@@ -10,7 +10,6 @@
         .nav-tabs .nav-link.active { background-color: #704214; color: white !important; border-color: #704214; }
         .nav-tabs .nav-link { color: #704214; font-weight: bold; }
         .info-card { background: white; border: 1px solid #e0d7c5; border-radius: 8px; margin-bottom: 15px; padding: 15px; }
-        .map-placeholder { background: #e0f2f1; border: 3px dashed #00796b; height: 350px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border-radius: 8px; font-weight: bold; color: #004d40; }
     </style>
 </head>
 <body>
@@ -40,51 +39,107 @@
     <div class="tab-content" id="guideTabsContent">
         
         <div class="tab-pane fade show active" id="map-content" role="tabpanel">
-            <div class="card p-3">
+            <div class="card p-3 shadow-sm">
                 <h4 class="text-center mb-3">📍 Tropical Paradise Property Layout</h4>
-                <div class="map-placeholder shadow-sm">
-                     🗺️ [Interactive Map Graphic: Tap Areas to View Room Layouts]
+                
+                <div class="row g-3 p-2">
+                    <div class="col-md-8">
+                        <div class="p-4 border rounded shadow-sm bg-white position-relative" style="min-height: 400px; background-image: radial-gradient(#e0f2f1 20%, transparent 20%), radial-gradient(#e0f2f1 20%, transparent 20%); background-size: 20px 20px; background-position: 0 0, 10px 10px;">
+                            <span class="badge bg-primary position-absolute top-0 start-0 m-3 p-2">🌊 Ocean Front View</span>
+                            
+                            <div class="d-flex flex-wrap justify-content-center gap-3 mt-5">
+                                <div class="card p-3 text-center border-success bg-light shadow-sm" style="width: 140px;">
+                                    <span class="fs-3">🏡</span>
+                                    <h6 class="mb-0 mt-1 fw-bold">Bungalows</h6>
+                                    <small class="text-muted">Zones A1-A5</small>
+                                </div>
+                                <div class="card p-3 text-center border-warning bg-light shadow-sm" style="width: 140px;">
+                                    <span class="fs-3">🏊</span>
+                                    <h6 class="mb-0 mt-1 fw-bold">Infinity Pool</h6>
+                                    <small class="text-muted">Central Deck</small>
+                                </div>
+                                <div class="card p-3 text-center border-danger bg-light shadow-sm" style="width: 140px;">
+                                    <span class="fs-3">💆</span>
+                                    <h6 class="mb-0 mt-1 fw-bold">Wellness Spa</h6>
+                                    <small class="text-muted">North Wing</small>
+                                </div>
+                                <div class="card p-3 text-center border-info bg-light shadow-sm" style="width: 140px;">
+                                    <span class="fs-3">🍹</span>
+                                    <h6 class="mb-0 mt-1 fw-bold">Bar & Grill</h6>
+                                    <small class="text-muted">Beachfront</small>
+                                </div>
+                            </div>
+                            
+                            <div class="position-absolute bottom-0 end-0 m-3 text-end">
+                                <span class="badge bg-secondary p-2">🚪 Main Entrance Gate</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card p-3 bg-light h-100 border-0 shadow-sm text-start">
+                            <h5 class="fw-bold border-bottom pb-2">📢 Guest Resort Tips</h5>
+                            <ul class="list-unstyled mt-3" style="font-size: 0.95rem; line-height: 1.6;">
+                                <li class="mb-3">🔑 <strong>Lobby Desk:</strong> Located right at the main entrance gate for immediate guest check-in support.</li>
+                                <li class="mb-3">📶 <strong>Resort Wi-Fi:</strong> Access free high-speed bandwidth via <code>ElRosie_Guest_WiFi</code>.</li>
+                                <li class="mb-3">🏖️ <strong>Fresh Towels:</strong> Pick up complimentary swim accessories at the Central Pool Deck station.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-muted text-center mt-2 small">*Note: Front Lobby is immediately located adjacent to the Main Entrance Parkway Gate.</p>
+
+                <p class="text-muted text-center mt-3 small mb-0">*Note: Front Lobby is immediately located adjacent to the Main Entrance Parkway Gate.</p>
             </div>
         </div>
 
         <div class="tab-pane fade" id="hours-content" role="tabpanel">
-            <div class="row">
-                {% for amenity in guide.amenities %}
-                <div class="col-md-4">
-                    <div class="info-card shadow-sm">
-                        <h4 class="h5">{{ amenity.title }}</h4>
-                        <p class="text-success fw-bold class mb-1">⏱️ Open: {{ amenity.hours }}</p>
-                        <small class="text-muted d-block"><strong>Guidelines:</strong> {{ amenity.rules }}</small>
+            <div class="row p-2">
+                {% if guide and guide.amenities %}
+                    {% for amenity in guide.amenities %}
+                    <div class="col-md-4">
+                        <div class="info-card shadow-sm text-start">
+                            <h4 class="h5 fw-bold">{{ amenity.title }}</h4>
+                            <p class="text-success fw-bold mb-1">⏱️ Open: {{ amenity.hours }}</p>
+                            <small class="text-muted d-block"><strong>Guidelines:</strong> {{ amenity.rules }}</small>
+                        </div>
                     </div>
-                </div>
-                {% endfor %}
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12 text-center p-4">
+                        <p class="text-muted">Loading operational facility hours...</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
 
         <div class="tab-pane fade" id="menu-content" role="tabpanel">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card p-3 shadow-sm">
-                        <h4 class="border-bottom pb-2">🌅 Morning Breakfast Selections</h4>
-                        <ul class="list-group list-group-flush">
-                            {% for item in guide.menus.breakfast %}
-                            <li class="list-group-item bg-transparent text-dark">{{ item }}</li>
-                            {% endfor %}
-                        </ul>
+            <div class="row g-3 p-2">
+                {% if guide and guide.menus %}
+                    <div class="col-md-6">
+                        <div class="card p-3 shadow-sm text-start">
+                            <h4 class="border-bottom pb-2 fw-bold">🌅 Morning Breakfast Selections</h4>
+                            <ul class="list-group list-group-flush">
+                                {% for item in guide.menus.breakfast %}
+                                <li class="list-group-item bg-transparent text-dark ps-0">{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card p-3 shadow-sm">
-                        <h4 class="border-bottom pb-2">🌇 Evening Bistro Dinners</h4>
-                        <ul class="list-group list-group-flush">
-                            {% for item in guide.menus.dinner %}
-                            <li class="list-group-item bg-transparent text-dark">{{ item }}</li>
-                            {% endfor %}
-                        </ul>
+                    <div class="col-md-6">
+                        <div class="card p-3 shadow-sm text-start">
+                            <h4 class="border-bottom pb-2 fw-bold">🌇 Evening Bistro Dinners</h4>
+                            <ul class="list-group list-group-flush">
+                                {% for item in guide.menus.dinner %}
+                                <li class="list-group-item bg-transparent text-dark ps-0">{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </div>
-                </div>
+                {% else %}
+                    <div class="col-12 text-center p-4">
+                        <p class="text-muted">Loading restaurant dining menus...</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
 
