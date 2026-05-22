@@ -11,7 +11,8 @@ from datetime import datetime
 import json
 import os
 
-DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bookings.json')
+import tempfile
+DB_FILE = os.path.join(tempfile.gettempdir(), 'bookings.json')
 # --- ROBUST DATA LOADING ---
 def load_data():
     if not os.path.exists(DB_FILE):
@@ -25,10 +26,11 @@ def load_data():
 
 def save_data(data):
     try:
+        # Use a temporary path or ensure the directory exists
         with open(DB_FILE, 'w') as f:
             json.dump(data, f, indent=4)
     except Exception as e:
-        print(f"CRITICAL ERROR SAVING JSON: {e}")
+        print(f"FAILED TO SAVE DATA: {e}") # Don't crash, just log it!
 
 # Global storage
 BOOKINGS_DB = load_data()
