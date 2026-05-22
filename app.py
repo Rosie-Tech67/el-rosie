@@ -523,10 +523,16 @@ def scan_qr(booking_id):
     except Exception as e:
         return f"CRASH: {e}", 500
     
-@app.route('/admin/scanner')
-def admin_scanner():
+@a@app.route('/admin/scan-action', methods=['POST'])
+def scan_action():
+    try:
+        data = request.get_json()
+        booking_id = data.get('booking_id')
     # This renders the camera interface for the admin
     return render_template('admin_scanner.html')
+return jsonify({'message': 'Check-in successful!'}), 200
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 
 @app.route('/admin/unlock-secret')
 def admin_unlock():

@@ -9,45 +9,74 @@
         .container { max-width: 500px; margin: auto; }
         #reader { border-radius: 15px; overflow: hidden; border: 2px solid #705335; }
         .back-btn { margin-top: 20px; display: inline-block; color: #705335; text-decoration: none; }
+        .loading { display: none; margin-top: 20px; color: #705335; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>SCAN GUEST QR CODE</h2>
         <div id="reader"></div>
+        <div class="loading" id="loading">Processing...</div>
         <a href="/admin/dashboard" class="back-btn">← Back to Dashboard</a>
     </div>
 
- <script>
-    function onScanSuccess(decodedText) {
-        // Stop the scanner after a successful scan to prevent multiple alerts
-        html5QrcodeScanner.clear();
-        
-        fetch('/admin/scan-action', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ booking_id: decodedText })
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message); 
-            window.location.reload();
-        })
-        .catch(err => {
-            console.error(err);
-            window.location.reload();
+    <script>
+        // Declare scanner variable globally
+        let html5QrcodeScanner = null;
+        let isProcessing = false; // Prevent multiple scans
+
+        function onScanSuccess(decodedText) {
+            // Prevent multiple scans while processing
+            if (isProcessing) return;
+            isProcessing = true;
+            
+            // Show loading indicator
+            document.getElementById('loading').style.display = 'block';
+            
+            // Stop the scanner after a successful scan
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear();
+            }
+            
+            // Send to backend
+            fetch('/admin/scan-action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ booking_id: decodedText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message || 'Scan processed successfully');
+                // Reload the page to restart scanner
+                window.location.reload();
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Error processing scan. Please try again.');
+                // Reload to restart scanner
+                window.location.reload();
+            });
+        }
+
+        function onScanFailure(error) {
+            // Silently handle scan failures
+            console.log('Scan failed:', error);
+        }
+
+        // Initialize scanner when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            if (html5QrcodeScanner === null) {
+                html5QrcodeScanner = new Html5QrcodeScanner(
+                    "reader", 
+                    { 
+                        fps: 10, 
+                        qrbox: 250,
+                        aspectRatio: 1.0
+                    }
+                );
+                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            }
         });
-    }
-
-    function onScanFailure(error) {
-        // Silently handle scan failures
-    }
-
-    // Initialize the scanner ONCE outside of any functions
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader", { fps: 10, qrbox: 250 }
-    );
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-</script>
+    </script>
 </body>
 </html>
