@@ -5,8 +5,7 @@ from flask_mail import Mail, Message
 import urllib.parse
 from datetime import datetime
 import random
-import requests # Ensure this is at the top of your app.py
-import requests
+import requests 
 from datetime import datetime
 
 app = Flask(__name__)
