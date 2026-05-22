@@ -523,16 +523,42 @@ def scan_qr(booking_id):
     except Exception as e:
         return f"CRASH: {e}", 500
     
-@a@app.route('/admin/scan-action', methods=['POST'])
+@app.route('/admin/scan-action', methods=['POST'])
 def scan_action():
     try:
         data = request.get_json()
         booking_id = data.get('booking_id')
-    # This renders the camera interface for the admin
-    return render_template('admin_scanner.html')
-return jsonify({'message': 'Check-in successful!'}), 200
+        
+        # Get the booking from database
+        booking = Booking.query.get(booking_id)  # Adjust based on your model
+        
+        if not booking:
+            return jsonify({'message': 'Booking not found!'}), 404
+        
+        # Check current status and toggle
+        if booking.status == 'checked_in':
+            # Check out
+            booking.check_out_time = datetime.now()
+            booking.status = 'checked_out'
+            db.session.commit()
+            return jsonify({'message': f'Guest {booking.guest_name} checked out successfully!'}), 200
+        else:
+            # Check in
+            booking.check_in_time = datetime.now()
+            booking.status = 'checked_in'
+            db.session.commit()
+            return jsonify({'message': f'Guest {booking.guest_name} checked in successfully!'}), 200
+        
     except Exception as e:
         return jsonify({'message': f'Error: {str(e)}'}), 500
+
+@app.route('/admin/qrscanner')
+def admin_qrscanner():
+    # Check if admin is logged in
+    if not session.get('admin_logged_in'):
+        return redirect('/admin/login')
+    
+    return render_template('admin_scanner.html')
 
 @app.route('/admin/unlock-secret')
 def admin_unlock():
