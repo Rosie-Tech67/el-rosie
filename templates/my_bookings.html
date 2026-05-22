@@ -13,122 +13,109 @@
         table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; font-size: 14px; }
         th { background-color: #705335; color: white; }
-        tr:hover { background-color: #fdfbf7; }
         
         .status-badge { font-weight: bold; padding: 4px 8px; border-radius: 12px; font-size: 11px; }
         .bg-pending { background: #fff3cd; color: #856404; }
         .bg-checkedin { background: #d4edda; color: #155724; }
-        .bg-completed { background: #e2e3e5; color: #383d41; }
+        .bg-secondary { background: #e2e3e5; color: #383d41; }
         
+        .alert-base { padding: 10px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; }
+        .alert-success { background-color: #d4edda; color: #155724; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; }
+
         .nav-links { margin-bottom: 20px; display: flex; gap: 15px; }
         .nav-links a { color: #705335; text-decoration: none; font-weight: bold; font-size: 14px; }
-        .nav-links a:hover { text-decoration: underline; }
         
-        .btn { padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; display: inline-block; }
-        .btn-receipt { background-color: #5bc0de; color: white; margin-right: 5px; }
+        .btn { padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; display: inline-block; }
+        .btn-receipt { background-color: #5bc0de; color: white; }
         .btn-cancel { background-color: #d9534f; color: white; }
         .btn-review { background-color: #705335; color: white; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div style="padding: 10px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; background-color: {% if category == 'success' %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if category == 'success' %}#155724{% else %}#721c24{% endif %};">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <div class="nav-links">
-            <a href="/">🏠 Home</a>
-            <a href="/book">📅 Book Again</a>
-            <a href="/logout" style="color: #d9534f; margin-left: auto;">Log Out</a>
-        </div>
-
-        <h1>🌸 My Reservations</h1>
-        <p>Logged in as: <strong>{{ session['user'] }}</strong></p>
-
-        <h3>🛎️ Current & Upcoming Stays</h3>
-        {% if active_bookings %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Booking ID</th>
-                    <th>Room Selected</th>
-                    <th>Check-In</th>
-                    <th>Check-Out</th>
-                    <th>Status</th>
-                    <th>Total Paid</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for booking in active_bookings %}
-                <tr>
-                    <td><strong>{{ booking.id }}</strong></td>
-                    <td>{{ booking.room.split('(')[0] }}</td>
-                    <td>{{ booking.check_in }}</td>
-                    <td>{{ booking.check_out }}</td>
-                    <td>
-                        <span class="status-badge {{ 'bg-checkedin' if booking.status == 'Checked-In' else 'bg-pending' }}">
-                            {{ booking.status }}
-                        </span>
-                    </td>
-                    <td>₱{{ booking.total_paid }}</td>
-                    <td>
-                        <a href="/receipt/{{ booking.id }}" class="btn btn-receipt" target="_blank">📄 Receipt</a>
-                        
-                        <form action="/cancel-booking/{{ booking.id }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.');">
-                            <button type="submit" class="btn btn-cancel">❌ Cancel</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p style="color: #888; font-style: italic;">You have no active upcoming stays scheduled.</p>
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert-base alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
         {% endif %}
+    {% endwith %}
 
-        <h3>📜 Past Stays</h3>
-        {% if past_bookings %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Booking ID</th>
-                    <th>Room Selected</th>
-                    <th>Check-Out Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for history in past_bookings %}
-                <tr>
-                    <td>{{ history.id }}</td>
-                    <td>{{ history.room.split('(')[0] }}</td>
-                    <td>{{ history.check_out_time }}</td>
-                    <td><span class="status-badge bg-secondary">Completed</span></td>
-                    <td>
-                        <a href="/receipt/{{ history.id }}" class="btn btn-receipt" target="_blank" style="margin-right: 5px;">📄 View Receipt</a>
-                        {% if not history.reviewed %}
-                        <a href="/review/{{ history.id }}" class="btn btn-review">Leave Review</a>
-                        {% else %}
-                        <span style="color: green; font-size: 12px; font-weight: bold;">✅ Reviewed</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p style="color: #888; font-style: italic;">No history of previous check-outs found.</p>
-        {% endif %}
+    <div class="nav-links">
+        <a href="{{ url_for('home') }}">🏠 Home</a>
+        <a href="{{ url_for('book') }}">📅 Book Again</a>
+        <a href="{{ url_for('logout') }}" style="color: #d9534f; margin-left: auto;">Log Out</a>
     </div>
+
+    <h1>🌸 My Reservations</h1>
+    <p>Logged in as: <strong>{{ session.get('user', 'Guest') }}</strong></p>
+
+    <h3>🛎️ Current & Upcoming Stays</h3>
+    {% if active_bookings %}
+    <table>
+       <thead>
+    <tr>
+        <th>Booking ID</th>
+        <th>Room</th>
+        <th>Check-In</th>
+        <th>Check-Out</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+<tbody>
+    {% for booking in active_bookings %}
+    <tr>
+        <td><strong>{{ booking.id }}</strong></td>
+        <td>{{ booking.room.split('(')[0] }}</td>
+        <td>{{ booking.check_in if booking.check_in else 'None' }}</td>
+        <td>{{ booking.check_out if booking.check_out else 'None' }}</td>
+        <td>
+            <span class="status-badge {{ 'bg-checkedin' if booking.status == 'Checked-In' else 'bg-pending' }}">
+                {{ booking.status }}
+            </span>
+        </td>
+        <td>
+            <a href="{{ url_for('view_receipt', booking_id=booking.id) }}" class="btn btn-receipt" target="_blank">📄 Receipt</a>
+            <form action="{{ url_for('customer_cancel_booking', booking_id=booking.id) }}" method="POST" style="display:inline;">
+                <button type="submit" class="btn btn-cancel">❌ Cancel</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+    </table>
+    {% else %}
+    <p><em>You have no active upcoming stays scheduled.</em></p>
+    {% endif %}
+
+    <h3>📜 Past Stays</h3>
+    {% if past_bookings %}
+    <table>
+        <tbody>
+            {% for history in past_bookings %}
+            <tr>
+                <td>{{ history.id }}</td>
+                <td>{{ history.room.split('(')[0] }}</td>
+                <td><span class="status-badge bg-secondary">Completed</span></td>
+                <td>
+                    <a href="{{ url_for('view_receipt', booking_id=history.id) }}" class="btn btn-receipt">📄 View</a>
+                    {% if not history.reviewed %}
+                    <a href="{{ url_for('leave_review', booking_id=history.id) }}" class="btn btn-review">Leave Review</a>
+                    {% else %}
+                    <span style="color: green; font-size: 12px;">✅ Reviewed</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p><em>No history of previous check-outs found.</em></p>
+    {% endif %}
+</div>
 
 </body>
 </html>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from datetime import datetime, timedelta
 from collections import Counter
 from flask_mail import Mail, Message
@@ -8,12 +8,35 @@ import random
 import requests # Ensure this is at the top of your app.py
 import requests
 from datetime import datetime
+import json
+import os
 
+DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bookings.json')
+# --- ROBUST DATA LOADING ---
+def load_data():
+    if not os.path.exists(DB_FILE):
+        return []
+    try:
+        with open(DB_FILE, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"CRITICAL ERROR LOADING JSON: {e}")
+        return []
 
+def save_data(data):
+    try:
+        with open(DB_FILE, 'w') as f:
+            json.dump(data, f, indent=4)
+    except Exception as e:
+        print(f"CRITICAL ERROR SAVING JSON: {e}")
 
+# Global storage
+BOOKINGS_DB = load_data()
 app = Flask(__name__)
 app.secret_key = "el_rosie_secret_secure_key"
 app.permanent_session_lifetime = timedelta(days=31)
+
+
 
 # --- EMAIL CONFIGURATION ---
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -103,6 +126,7 @@ import urllib.parse  # Ensure this is at the top of your file
 import requests
 from datetime import datetime
 from flask import render_template, request, flash, redirect, url_for
+
 @app.route('/book', methods=['GET', 'POST'])
 def book():
     # --- 1. Weather Fetching for Smart Suggestions ---
@@ -188,8 +212,8 @@ def book():
                 "name": guest_name, 
                 "phone": guest_phone,
                 "email": guest_email, 
-                "check_in": check_in, 
-                "check_out": check_out,
+                "check_in": None, 
+                "check_out": None,
                 "room": ROOM_PRICES[room_type]['name'],
                 "guests": f"Adults: {adults}, Children: {children}",
                 "total_paid": total_cost, 
@@ -202,8 +226,8 @@ def book():
                 "payment_reference": payment_reference
             }
             BOOKINGS_DB.append(booking_record)
-            
-            # --- START DYNAMIC QR CODE ATTACHMENT ---
+            save_data(BOOKINGS_DB) # <--- THIS LINE IS MISSING
+        
             base_url = request.host_url.rstrip('/') 
             checkin_link = f"{base_url}/scan/{booking_id}"
             encoded_link = urllib.parse.quote(checkin_link)
@@ -413,6 +437,8 @@ def admin_dashboard():
                                
     return redirect(url_for('login'))
 
+
+
 @app.route('/catalog')
 def catalog():
     # Structural rates directory passed dynamically
@@ -509,18 +535,27 @@ def admin_unlock():
 
 @app.route('/my-bookings')
 def my_bookings():
-    # Security check: Ensure the user is actually logged in
     if 'user' not in session:
         flash("Please log in to view your reservations.", "warning")
         return redirect(url_for('login'))
     
-    user_email = session['user']
+    # Normalize the session email
+    user_email = session['user'].strip().lower()
     
-    # Filter active bookings belonging to this specific user email
-    user_active = [b for b in BOOKINGS_DB if b.get('email') == user_email]
+    # Filter using normalized emails
+    user_active = [
+        b for b in BOOKINGS_DB 
+        if b.get('email', '').strip().lower() == user_email
+    ]
     
-    # Filter past/completed bookings belonging to this specific user email
-    user_past = [h for h in BOOKING_HISTORY if h.get('email') == user_email]
+    user_past = [
+        h for h in BOOKING_HISTORY 
+        if h.get('email', '').strip().lower() == user_email
+    ]
+    
+    # DEBUG: See what is actually being found in your terminal
+    print(f"DEBUG: Searching for {user_email}")
+    print(f"DEBUG: Found {len(user_active)} active and {len(user_past)} past bookings.")
     
     return render_template('my_bookings.html', active_bookings=user_active, past_bookings=user_past)
 
@@ -549,29 +584,27 @@ def customer_cancel_booking(booking_id):
 
 # 1. Change the URL rule to match your booking redirect path ('receipt')
 @app.route('/receipt/<booking_id>')
-def receipt(booking_id): # <--- Changed function name from view_receipt to receipt
+def view_receipt(booking_id):
     if 'user' not in session:
         flash("Please log in to view receipts.", "danger")
         return redirect(url_for('login'))
         
-    user_email = session['user']
+    user_email = session.get('user', '')
     
-    # 2. Search in active bookings first 
+    # Search in active bookings
     booking = next((b for b in BOOKINGS_DB if str(b.get('id')) == str(booking_id)), None)
     
-    # 3. If not found, search in past completed history
+    # If not found, search in past history
     if not booking:
         booking = next((h for h in BOOKING_HISTORY if str(h.get('id')) == str(booking_id)), None)
         
     if not booking:
         return "Receipt not found in our resort databases.", 404
         
-    # 4. SECURITY CHECK: Ensure the logged-in user owns this booking record
-    # (Using .lower() prevents simple capitalization mismatches from breaking your checks!)
+    # SECURITY CHECK
     if booking.get('email', '').strip().lower() != user_email.strip().lower():
         return "Unauthorized access to this reservation profile record.", 403
 
-    # 5. RENDER THE RECEIPT VOUCHER CANVAS
     return render_template('receipt.html', booking=booking)
 
 if __name__ == '__main__':

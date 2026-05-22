@@ -18,29 +18,35 @@
         <a href="/admin/dashboard" class="back-btn">← Back to Dashboard</a>
     </div>
 
-   <script>
-    function onScanSuccess(decodedText, decodedResult) {
-        // 1. Check if the decodedText already has a URL
-        // 2. Add the admin_direct mode so the server bypasses the secret code
-        let redirectUrl = decodedText;
+ <script>
+    function onScanSuccess(decodedText) {
+        // Stop the scanner after a successful scan to prevent multiple alerts
+        html5QrcodeScanner.clear();
         
-        if (redirectUrl.includes('?')) {
-            redirectUrl += "&mode=admin_direct";
-        } else {
-            redirectUrl += "?mode=admin_direct";
-        }
-
-        // Redirect the admin to the Gate Pass URL automatically
-        window.location.href = redirectUrl;
+        fetch('/admin/scan-action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ booking_id: decodedText })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message); 
+            window.location.reload();
+        })
+        .catch(err => {
+            console.error(err);
+            window.location.reload();
+        });
     }
 
     function onScanFailure(error) {
-        // Silently handle scan failures/misses
+        // Silently handle scan failures
     }
 
-    // Initialize the scanner
+    // Initialize the scanner ONCE outside of any functions
     let html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader", { fps: 10, qrbox: 250 });
+        "reader", { fps: 10, qrbox: 250 }
+    );
     html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 </script>
 </body>
