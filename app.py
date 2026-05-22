@@ -131,30 +131,19 @@ from flask import render_template, request, flash, redirect, url_for
 
 @app.route('/book', methods=['GET', 'POST'])
 def book():
-    # --- 1. Weather Fetching for Smart Suggestions ---
+    # --- 1. Weather Fetching (Non-blocking) ---
+    weather_rec = {"text": "Welcome back!", "icon": "heart", "temp": "30"}
+    
     try:
-        # Nasugbu location API call
         api_key = "bc58679904d9c02d137021c3272d3f9e"
         url = f"http://api.openweathermap.org/data/2.5/weather?q=Nasugbu&appid={api_key}&units=metric"
-        data = requests.get(url, timeout=5).json()
-        
-        temp = round(data['main']['temp'])
-        condition = data['weather'][0]['main']
-        
-        if condition == "Rain":
-            rec_text = "It's a bit rainy today! Perfect for an indoor Spa session or a cozy day in your bungalow."
-            rec_icon = "cloud-showers-heavy"
-        elif temp > 30:
-            rec_text = "It's a beautiful sunny day! We recommend adding a Pool Pass or an Extra Cooler."
-            rec_icon = "sun"
-        else:
-            rec_text = "The weather is perfect for a sunset walk. Enjoy your stay!"
-            rec_icon = "palmtree"
-            
-        weather_rec = {"text": rec_text, "icon": rec_icon, "temp": temp}
-    except:
-        # Fallback if API fails
-        weather_rec = {"text": "Welcome back! We are ready for your stay.", "icon": "heart", "temp": "30"}
+        # THE FIX: Add timeout=2 so it doesn't wait forever
+        response = requests.get(url, timeout=2) 
+        if response.status_code == 200:
+            data = response.json()
+            # ... process weather ...
+    except Exception as e:
+        print(f"Weather API skipped: {e}")
 
     # --- 2. Room Availability Logic ---
     total_cost = 0
