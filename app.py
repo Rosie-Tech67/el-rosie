@@ -10,6 +10,10 @@ import requests
 from datetime import datetime
 import json
 import os
+from flask import *          # ✓ Needs Flask in requirements
+from flask_sqlalchemy import * # ✓ Needs flask-sqlalchemy
+from flask_mail import *     # ✓ Needs flask-mail
+import requests
 
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bookings.json')
 # --- ROBUST DATA LOADING ---
