@@ -228,16 +228,62 @@ def book():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if 'user' in session:
-        # Check if this specific user has a completed booking in history that hasn't been reviewed yet
-        user_email = session.get('user')
-        for h in BOOKING_HISTORY:
-            if h.get('email') == user_email and h.get('status') == 'Checked-Out' and not h.get('reviewed'):
-                return redirect(url_for('leave_review', booking_id=h.get('id')))
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        # Check if the user exists in your USER_DATABASE
+        if email in USER_DATABASE and USER_DATABASE[email]['password'] == password:
+            session.permanent = True
+            session['user'] = email
+            session['role'] = USER_DATABASE[email]['role']
+            
+            # Updated to reflect your new resort branding: El Rohi!
+            flash("Welcome back to El Rohi!", "success")
+            
+            # Redirect based on user role
+            if session['role'] == 'admin':
+                return redirect(url_for('admin_dashboard'))
+            
+            return redirect(url_for('home')) 
+        else:
+            flash("Invalid email or password. Please try again.", "danger")
+            # If POST fails, it falls through to render the login page again below
+            
+    # CRITICAL FIX: This handles the initial GET request when someone clicks "Sign In"
+    return render_template('login.html')
 
-        if session.get('role') == 'admin':
-            return redirect(url_for('admin_dashboard'))
-        return redirect(url_for('book'))
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        role = request.form.get('role', 'customer') # Default new sign-ups to customer
+        
+        if not email or not password:
+            flash("Please fill out all fields.", "danger")
+            return render_template('register.html')
+            
+        # Check if the user already exists
+        if email in USER_DATABASE:
+            flash("Email already registered! Try signing in.", "danger")
+            return redirect(url_for('login'))
+            
+        # Save the new user into your existing USER_DATABASE dictionary
+        USER_DATABASE[email] = {
+            'password': password,
+            'role': role
+        }
+        
+        # Log them in automatically right after registration
+        session.permanent = True
+        session['user'] = email
+        session['role'] = role
+        
+        flash("Registration successful! Welcome to El Rohi.", "success")
+        return redirect(url_for('home'))
+        
+    return render_template('register.html')
     
 
 @app.route('/review/<booking_id>', methods=['GET', 'POST'])

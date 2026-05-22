@@ -43,12 +43,12 @@
     
     <div class="stats-container">
         <div class="stat-box">
-            <h2>Public Revenue Matrix</h2>
-            <h2>Encoding Element Not Provided</h2>
+            <h2>₱{{ revenue }}</h2>
             <p>Total Revenue</p>
         </div>
+
         <div class="stat-box">
-            <h2>Encoding Element Not Provided</h2>
+            <h2>{{ count }}</h2>
             <p>Total Reservations</p>
         </div>
         
@@ -63,17 +63,17 @@
         </div>
 
         <div class="stat-box">
-            <h2 style="font-size: 18px;">Encoding Element Not Provided</h2>
+            <h2 style="font-size: 18px;">{{ popular }}</h2>
             <p>Most Popular Room</p>
         </div>
 
         <div class="stat-box" style="border-top: 4px solid #3498db;">
             <div style="display: flex; align-items: center; justify-content: center; gap: 5px;">
-                <img src="http://openweathermap.org/img/wn/Encoding Element Not Provided@2x.png" width="45" alt="weather">
-                <h2 style="margin: 0; font-size: 24px;">Encoding Element Not Provided°C</h2>
+                <img src="http://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" width="45" alt="weather">
+                <h2 style="margin: 0; font-size: 24px;">{{ weather.temp }}°C</h2>
             </div>
-            <p style="font-weight: bold; margin: 5px 0; color: #3498db;">Encoding Element Not Provided</p>
-            <p style="font-size: 11px; font-style: italic; color: #666;">Encoding Element Not Provided</p>
+            <p style="font-weight: bold; margin: 5px 0; color: #3498db;">{{ weather.desc }}</p>
+            <p style="font-size: 11px; font-style: italic; color: #666;">{{ weather.advice }}</p>
         </div>
     </div>
 
