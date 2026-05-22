@@ -272,8 +272,8 @@ def login():
             session['user'] = email
             session['role'] = USER_DATABASE[email]['role']
             
-            # Updated to reflect your new resort branding: El Rohi!
-            flash("Welcome back to El Rohi!", "success")
+            # Updated to reflect your new resort branding: El Rosie!
+            flash("Welcome back to El Rosie!", "success")
             
             # Redirect based on user role
             if session['role'] == 'admin':
@@ -314,7 +314,7 @@ def register():
         session['user'] = email
         session['role'] = role
         
-        flash("Registration successful! Welcome to El Rohi.", "success")
+        flash("Registration successful! Welcome to El Rosie.", "success")
         return redirect(url_for('home'))
         
     return render_template('register.html')
