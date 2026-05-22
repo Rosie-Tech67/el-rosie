@@ -2,24 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ִֶָ. ..𓂃 ࣪ ִֶָ🌊་༘࿐ El Rosie Beach Resort - Home</title>
+    <title>ִֶָ. ..𓂃 ࣪ ִֶָ🌊་༘࿐ El Rohi Beach Resort - Home</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     
     <header>
-      <div class="logo-container">ָ. ..𓂃 ࣪ ִֶָ🌊་༘࿐El Rosie Beach Resort</div>
-<nav>
-    <a href="{{ url_for('home') }}" class="active">Home</a>
-    <a href="{{ url_for('gallery') }}">Gallery</a>
-    <a href="{{ url_for('activities') }}">Activities</a>
+        <div class="logo-container">ָ. ..𓂃 ࣪ ִֶָ🌊་༘࿐El Rohi Beach Resort</div>
+        <nav>
+            <a href="{{ url_for('home') }}" class="active">Home</a>
+            <a href="{{ url_for('gallery') }}">Gallery</a>
+            <a href="{{ url_for('activities') }}">Activities</a>
+            <a href="{{ url_for('explore') }}" class="nav-link">Explore Resort Guide</a>
+            
+            <a href="{{ url_for('book') }}" class="btn-book">Book Now</a>
 
-    <a href="{{ url_for('explore') }}" class="nav-link">Explore Resort Guide</a>
-    
-    <a href="{{ url_for('book') }}" class="btn-book">Book Now</a>
-
-    <a href="{{ url_for('login') }}" class="nav-link">Sign In</a>
-</nav>
+            {% if session.get('user') %}
+                <span style="color: white; margin-left: 15px; font-weight: bold; font-family: sans-serif; font-size: 14px;">
+                    Hi, {{ session['user'].split('@')[0] }}!
+                </span>
+                <a href="{{ url_for('logout') }}" style="color: #fff; margin-left: 15px; text-decoration: none; font-family: sans-serif; font-size: 14px;">
+                    Log Out
+                </a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="nav-link">Sign In</a>
+            {% endif %}
+        </nav>
     </header>
 
     <div class="hero-banner">
@@ -42,15 +50,15 @@
             </div>
             <div style="margin-top: 30px;">
                 <h2>About the Resort</h2>
-                <p>Welcome to El Rosie, where the serenity of the shoreline meets the innovation of tomorrow. Nestled along a pristine tropical coast, our resort is designed for the modern traveler who values both natural beauty and a frictionless experience.
+                <p>Welcome to El Rohi, where the serenity of the shoreline meets the innovation of tomorrow. Nestled along a pristine tropical coast, our resort is designed for the modern traveler who values both natural beauty and a frictionless experience.
 
-At El Rosie, we believe that your vacation should start the moment you decide to visit.</p>
+At El Rohi, we believe that your vacation should start the moment you decide to visit.</p>
             </div>
         </div>
 
         <aside class="reservation-sidebar-card">
             <h3>Make a Reservation</h3>
-            <p>Leave the world behind and immerse yourself in the sun-drenched beauty of El Rosie Beach Resort. Whether you’re seeking a quiet retreat or a family adventure, our pristine shores and smart-booking convenience make your dream vacation effortless.</p>
+            <p>Leave the world behind and immerse yourself in the sun-drenched beauty of El Rohi Beach Resort. Whether you’re seeking a quiet retreat or a family adventure, our pristine shores and smart-booking convenience make your dream vacation effortless.</p>
             <a href="{{ url_for('book') }}" class="btn-sidebar-action">BOOK NOW</a>
         </aside>
     </main>

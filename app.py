@@ -284,6 +284,13 @@ def register():
         return redirect(url_for('home'))
         
     return render_template('register.html')
+
+@app.route('/logout')
+def logout():
+    # Clear out all user data from the browser session context
+    session.clear()
+    flash("You have been logged out successfully.", "info")
+    return redirect(url_for('home'))
     
 
 @app.route('/review/<booking_id>', methods=['GET', 'POST'])
