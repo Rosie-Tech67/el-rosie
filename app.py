@@ -9,8 +9,6 @@ import requests # Ensure this is at the top of your app.py
 import requests
 from datetime import datetime
 
-# Global storage
-BOOKINGS_DB = load_data()
 app = Flask(__name__)
 app.secret_key = "el_rosie_secret_secure_key"
 app.permanent_session_lifetime = timedelta(days=31)
