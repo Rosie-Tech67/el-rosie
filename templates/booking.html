@@ -110,6 +110,48 @@
                         placeholder="e.g., It's my wife's birthday, please put flowers in the room."
                         style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; resize: vertical;">{{ request.form.get('special_notes', '') }}</textarea>
                 </div>
+
+                <div class="payment-section" style="margin-top: 25px; margin-bottom: 25px;">
+                    <h3 style="color: #705335; margin-bottom: 15px; border-bottom: 2px solid #e0d0c0; padding-bottom: 5px;">CN💳 Select Payment Method</h3>
+                    <p style="font-size: 13px; color: #666; margin-top: -5px; margin-bottom: 15px; text-align: left;">Please select how you would like to process your booking:</p>
+                    
+                    <div class="payment-options-grid" style="display: flex; gap: 15px; flex-wrap: wrap; text-align: left;">
+                        
+                        <label style="flex: 1; min-width: 120px; border: 2px solid #ddd; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; cursor: pointer; background: #fff; transition: 0.2s;" class="pay-card">
+                            <input type="radio" name="payment_method" value="GCash" checked style="margin-bottom: 10px; accent-color: #705335;" onchange="togglePaymentFields()">
+                            <span style="font-size: 24px; margin-bottom: 5px;">🔵</span>
+                            <span style="font-weight: bold; font-size: 14px; color: #333;">GCash</span>
+                        </label>
+
+                        <label style="flex: 1; min-width: 120px; border: 2px solid #ddd; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; cursor: pointer; background: #fff; transition: 0.2s;" class="pay-card">
+                            <input type="radio" name="payment_method" value="Card" {% if request.form.get('payment_method') == 'Card' %}checked{% endif %} style="margin-bottom: 10px; accent-color: #705335;" onchange="togglePaymentFields()">
+                            <span style="font-size: 24px; margin-bottom: 5px;">💳</span>
+                            <span style="font-weight: bold; font-size: 14px; color: #333;">Credit / Debit</span>
+                        </label>
+
+                        <label style="flex: 1; min-width: 120px; border: 2px solid #ddd; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; cursor: pointer; background: #fff; transition: 0.2s;" class="pay-card">
+                            <input type="radio" name="payment_method" value="Cash" {% if request.form.get('payment_method') == 'Cash' %}checked{% endif %} style="margin-bottom: 10px; accent-color: #705335;" onchange="togglePaymentFields()">
+                            <span style="font-size: 24px; margin-bottom: 5px;">💵</span>
+                            <span style="font-weight: bold; font-size: 14px; color: #333;">Cash at Gate</span>
+                        </label>
+
+                    </div>
+
+                    <div id="onlinePaymentFields" style="margin-top: 20px; padding: 20px; background-color: #fcf9f5; border: 1px dashed #d4a373; border-radius: 6px; text-align: left; display: block;">
+                        <h4 id="paymentFieldTitle" style="color: #705335; margin-top: 0; margin-bottom: 15px; font-size: 14px;">Online Gateway Processing Info</h4>
+                        
+                        <div class="form-row-split" style="display: flex; gap: 15px; margin-bottom: 10px;">
+                            <div class="form-group-block" style="flex: 1;">
+                                <label id="accountLabel" style="font-size: 13px; font-weight: bold;">Account Name / Number</label>
+                                <input type="text" name="payment_account" id="payment_account" placeholder="e.g., 09123456789" style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
+                            </div>
+                            <div class="form-group-block" style="flex: 1;">
+                                <label style="font-size: 13px; font-weight: bold;">Transaction Reference Number</label>
+                                <input type="text" name="payment_reference" id="payment_reference" placeholder="e.g., MP123456789" style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <input type="hidden" name="confirm_booking" value="" id="isConfirm">
                 <button type="button" class="btn-submit-booking" onclick="document.getElementById('isConfirm').value='true'; document.getElementById('bookingForm').submit();">Confirm Booking</button>
@@ -149,5 +191,51 @@
             {% endif %}
         </aside>
     </main>
+
+    <style>
+        .pay-card:has(input:checked) {
+            border-color: #705335 !important;
+            background-color: #fdfbf7 !important;
+            box-shadow: 0 4px 8px rgba(112, 83, 53, 0.1);
+        }
+    </style>
+
+    <script>
+    function togglePaymentFields() {
+        const selectedMethod = document.querySelector('input[name="payment_method"]:checked').value;
+        const onlineFieldsBlock = document.getElementById('onlinePaymentFields');
+        const accountInput = document.getElementById('payment_account');
+        const referenceInput = document.getElementById('payment_reference');
+        const titleText = document.getElementById('paymentFieldTitle');
+        const accountLabel = document.getElementById('accountLabel');
+
+        if (selectedMethod === 'Cash') {
+            // Hide fields and remove required flags
+            onlineFieldsBlock.style.display = 'none';
+            accountInput.removeAttribute('required');
+            referenceInput.removeAttribute('required');
+        } else {
+            // Show fields and set required flags
+            onlineFieldsBlock.style.display = 'block';
+            accountInput.setAttribute('required', 'required');
+            referenceInput.setAttribute('required', 'required');
+            
+            if (selectedMethod === 'GCash') {
+                titleText.innerText = "🔵 GCash Transfer Verification";
+                accountLabel.innerText = "GCash Registered Mobile Number / Name";
+                accountInput.placeholder = "e.g., 0912 345 6789";
+            } else {
+                titleText.innerText = "💳 Credit / Debit Card Info Tracker";
+                accountLabel.innerText = "Cardholder Full Name";
+                accountInput.placeholder = "e.g., Moises Abellera";
+            }
+        }
+    }
+
+    // Run initialization on load to match initial checked element properties
+    document.addEventListener("DOMContentLoaded", function() {
+        togglePaymentFields();
+    });
+    </script>
 </body>
 </html>

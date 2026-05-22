@@ -10,6 +10,21 @@
         .nav-tabs .nav-link.active { background-color: #704214; color: white !important; border-color: #704214; }
         .nav-tabs .nav-link { color: #704214; font-weight: bold; }
         .info-card { background: white; border: 1px solid #e0d7c5; border-radius: 8px; margin-bottom: 15px; padding: 15px; }
+        
+        /* Interactive Card Custom Hover Effects */
+        .interactive-zone-card {
+            width: 140px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .interactive-zone-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+            opacity: 0.95;
+        }
+        .interactive-zone-card:active {
+            transform: scale(0.98);
+        }
     </style>
 </head>
 <body>
@@ -48,25 +63,37 @@
                             <span class="badge bg-primary position-absolute top-0 start-0 m-3 p-2">🌊 Ocean Front View</span>
                             
                             <div class="d-flex flex-wrap justify-content-center gap-3 mt-5">
-                                <div class="card p-3 text-center border-success bg-light shadow-sm" style="width: 140px;">
+                                <div class="card p-3 text-center border-success bg-light shadow-sm interactive-zone-card" onclick="showPreview('bungalows')">
                                     <span class="fs-3">🏡</span>
                                     <h6 class="mb-0 mt-1 fw-bold">Bungalows</h6>
                                     <small class="text-muted">Zones A1-A5</small>
                                 </div>
-                                <div class="card p-3 text-center border-warning bg-light shadow-sm" style="width: 140px;">
+                                <div class="card p-3 text-center border-warning bg-light shadow-sm interactive-zone-card" onclick="showPreview('pool')">
                                     <span class="fs-3">🏊</span>
                                     <h6 class="mb-0 mt-1 fw-bold">Infinity Pool</h6>
                                     <small class="text-muted">Central Deck</small>
                                 </div>
-                                <div class="card p-3 text-center border-danger bg-light shadow-sm" style="width: 140px;">
+                                <div class="card p-3 text-center border-danger bg-light shadow-sm interactive-zone-card" onclick="showPreview('spa')">
                                     <span class="fs-3">💆</span>
                                     <h6 class="mb-0 mt-1 fw-bold">Wellness Spa</h6>
                                     <small class="text-muted">North Wing</small>
                                 </div>
-                                <div class="card p-3 text-center border-info bg-light shadow-sm" style="width: 140px;">
+                                <div class="card p-3 text-center border-info bg-light shadow-sm interactive-zone-card" onclick="showPreview('bar')">
                                     <span class="fs-3">🍹</span>
                                     <h6 class="mb-0 mt-1 fw-bold">Bar & Grill</h6>
                                     <small class="text-muted">Beachfront</small>
+                                </div>
+                            </div>
+                            
+                            <div id="resort-preview-display" class="mt-5 p-3 shadow border text-start" style="display: none; background: #fdfbf7; border-color: #e0d7c5 !important; border-radius: 8px;">
+                                <div class="row align-items-center">
+                                    <div class="col-sm-4 text-center mb-3 mb-sm-0">
+                                        <img id="preview-img" src="" alt="Resort Asset View" class="img-fluid rounded border shadow-sm" style="max-height: 160px; width: 100%; object-fit: cover;">
+                                    </div>
+                                    <div class="col-sm-8">
+                                        <h5 id="preview-title" class="fw-bold" style="color: #704214; margin-top: 0;"></h5>
+                                        <p id="preview-description" class="mb-0 text-muted small" style="line-height: 1.5;"></p>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -147,5 +174,51 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+function showPreview(zone) {
+    const displayPanel = document.getElementById('resort-preview-display');
+    const title = document.getElementById('preview-title');
+    const description = document.getElementById('preview-description');
+    const img = document.getElementById('preview-img');
+    
+    displayPanel.style.display = "block";
+    
+    if (zone === 'bungalows') {
+        title.innerHTML = "🏡 Luxury Guest Bungalows Layout";
+        description.innerText = "Our standalone villas feature individual detached pocket designs, high-vaulted native architecture ceiling profiles, an open garden deck interface, and immediate stepping pathways directly access to the beach frontages.";
+        
+        // Paste your direct image link here:
+        img.src = "https://i.pinimg.com/736x/bf/b5/28/bfb528bbf4d946924b8d234ce9deb6a2.jpg";
+        img.alt = "Bungalow Layout Blueprint";
+    } 
+    else if (zone === 'pool') {
+        title.innerHTML = "🏊 Infinity Pool Deck Layout";
+        description.innerText = "Overlooking the ocean coastline. Includes cascading multi-tier water purifiers, underwater ambient night glow rigs, adjacent fresh changing facilities, and zero-edge sun loungers for sunset viewing loops.";
+        
+        // Paste your direct image link here:
+        img.src = "https://i.pinimg.com/736x/a6/d6/fa/a6d6fa379dee7bc91e3a40c02901d636.jpg";
+        img.alt = "Infinity Pool Architecture View";
+    } 
+    else if (zone === 'spa') {
+        title.innerHTML = "💆 North Wing Wellness Spa";
+        description.innerText = "A secluded sanctuary designed for somatic tranquility. Offers private therapeutic treatment structures, a dry-heat Swedish sauna pipeline, essential aroma diffusers, and panoramic windows facing the deep estate foliage lines.";
+        
+        // Paste your direct image link here:
+        img.src = "https://i.pinimg.com/736x/a0/2f/60/a02f60df4bff11d081070409ce66d443.jpg"; 
+        img.alt = "Wellness Spa Wing View";
+    } 
+    else if (zone === 'bar') {
+        title.innerHTML = "🍹 Sandbar Grill & Lounge";
+        description.innerText = "Al-fresco dining setup offering freshly caught local seafood grids and cold tropical fruit smoothies. Features live low-acoustic band configurations and fire pit configurations lit daily starting at 6:00 PM.";
+        
+        // Paste your direct image link here:
+        img.src = "https://i.pinimg.com/736x/c8/1b/63/c81b6362c24703f0fc47b49efbb3ddac.jpg";
+        img.alt = "Beachfront Bar Lounge Grid";
+    }
+    
+    displayPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
 </body>
 </html>

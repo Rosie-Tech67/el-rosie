@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Receipt - {{ booking.id }}</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; margin: 20px; background-color: #f4f4f4; color: #000; }
+        .receipt-card { max-width: 450px; margin: 20px auto; background: white; padding: 30px; border: 1px solid #ddd; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
+        .center { text-align: center; }
+        .divider { border-top: 1px dashed #000; margin: 15px 0; }
+        .flex-row { display: flex; justify-content: space-between; margin: 6px 0; font-size: 14px; }
+        .total-line { font-size: 18px; font-weight: bold; margin-top: 15px; }
+        
+        /* QR Code Layout Customizer */
+        .qr-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 25px 0 15px; }
+        #receiptQr { padding: 10px; background: white; border: 1px solid #eee; display: inline-block; }
+        .qr-caption { font-size: 11px; color: #555; margin-top: 8px; font-style: italic; }
+
+        /* Action Buttons Container Grid */
+        .action-container { display: flex; gap: 10px; width: 100%; max-width: 450px; margin: 20px auto; }
+        .btn-print, .btn-home { flex: 1; padding: 12px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; font-family: Arial, sans-serif; border-radius: 4px; border: none; font-size: 14px; }
+        .btn-print { background: #705335; color: white; }
+        .btn-home { background: #6c757d; color: white; }
+        
+        /* @media print overrides: Removes all interface buttons and isolates the voucher canvas */
+        @media print { 
+            .no-print { display: none !important; } 
+            body { background: white; margin: 0; color: #000; } 
+            .receipt-card { border: none; box-shadow: none; margin: 0 auto; padding: 10px; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="receipt-card">
+        <div class="center">
+            <h2 style="margin: 0; letter-spacing: 2px;">EL ROHI</h2>
+            <p style="margin: 5px 0; font-size: 12px;">Beach Resort Sanctuary</p>
+            <p style="font-size: 11px; color: #555;">Nasugbu, Batangas, Philippines</p>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="flex-row"><span>Receipt ID:</span> <span>REC-{{ booking.id }}</span></div>
+        <div class="flex-row"><span>Booking Ref:</span> <span>{{ booking.id }}</span></div>
+        <div class="flex-row"><span>Guest Name:</span> <span>{{ booking.name }}</span></div>
+        <div class="flex-row"><span>Guest Email:</span> <span>{{ booking.email }}</span></div>
+        
+        <div class="divider"></div>
+        
+        <div class="flex-row"><strong>Item Description</strong> <strong>Amount</strong></div>
+        <div class="flex-row">
+            <span style="max-width: 280px;">{{ booking.room }}</span>
+            <span>₱{{ booking.total_paid }}</span>
+        </div>
+        <div class="flex-row"><span style="font-size: 12px; font-style: italic; color:#555;">Stay: {{ booking.check_in }} to {{ booking.check_out }}</span></div>
+        
+        <div class="divider"></div>
+        
+        <div class="flex-row total-line"><span>TOTAL PAID:</span> <span>₱{{ booking.total_paid }}</span></div>
+        
+        <div class="flex-row" style="font-weight: bold; font-size: 12px;">
+            <span>Payment Status:</span> 
+            {% if booking.payment_method == 'Cash' %}
+                <span style="color: #d4a373;">UNPAID (Pay on Arrival)</span>
+            {% else %}
+                <span style="color: green;">PAID / VERIFIED</span>
+            {% endif %}
+        </div>
+        <div class="flex-row" style="font-size: 12px; margin-top: 2px; color: #555;">
+            <span>Method Chosen:</span> 
+            <span>{{ booking.payment_method if booking.payment_method else 'GCash' }}</span>
+        </div>
+        
+        <div class="qr-wrapper">
+            <div id="receiptQr"></div>
+            <div class="qr-caption">Scan at front gate to verify stay status</div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="center" style="font-size: 11px; margin-top: 10px;">
+            <p>Thank you for choosing El Rohi!</p>
+            <p>Please present your digital check-in voucher or QR receipt structure upon arriving at the main resort gateway.</p>
+        </div>
+    </div>
+
+    <div class="action-container no-print">
+        <button class="btn-print" onclick="window.print()">🖨️ Print Receipt</button>
+        <a href="{{ url_for('home') }}" class="btn-home">🏡 Back to Home</a>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        // Reads window domain settings to generate compatible router addresses automatically
+        const dynamicHost = window.location.host;
+        const targetUrl = `http://${dynamicHost}/scan/${encodeURIComponent('{{ booking.id }}')}`;
+        
+        new QRCode(document.getElementById("receiptQr"), {
+            text: targetUrl,
+            width: 130,
+            height: 130,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+    </script>
+</body>
+</html>

@@ -103,7 +103,6 @@ import urllib.parse  # Ensure this is at the top of your file
 import requests
 from datetime import datetime
 from flask import render_template, request, flash, redirect, url_for
-
 @app.route('/book', methods=['GET', 'POST'])
 def book():
     # --- 1. Weather Fetching for Smart Suggestions ---
@@ -155,6 +154,12 @@ def book():
         adults = request.form.get('adults', '1')
         children = request.form.get('children', '0')
         special_notes = request.form.get('special_notes', 'None') 
+        
+        payment_method = request.form.get('payment_method', 'GCash')
+        
+        # EXTRACT REFERENCE FIELDS: Grabs details if transaction happened via online gateway
+        payment_account = request.form.get('payment_account', 'N/A') if payment_method != 'Cash' else 'N/A'
+        payment_reference = request.form.get('payment_reference', 'N/A') if payment_method != 'Cash' else 'N/A'
 
         selected_room_id = room_type
 
@@ -174,8 +179,9 @@ def book():
                 flash("Sorry, that room type is fully booked!", "danger")
                 return redirect(url_for('book'))
 
-            # Unique Booking ID
+            # Generate unique custom serial token key
             booking_id = f"ELR-{1001 + len(BOOKINGS_DB)}"
+            initial_status = "Pending Payment" if payment_method == "Cash" else "Paid / Verified"
             
             booking_record = {
                 "id": booking_id, 
@@ -187,24 +193,24 @@ def book():
                 "room": ROOM_PRICES[room_type]['name'],
                 "guests": f"Adults: {adults}, Children: {children}",
                 "total_paid": total_cost, 
-                "status": "Pending",
-                "notes": special_notes
+                "status": initial_status,
+                "notes": special_notes,
+                "payment_method": payment_method,
+                
+                # DATA STORAGE: Saves reference details into your active dictionary row
+                "payment_account": payment_account,
+                "payment_reference": payment_reference
             }
             BOOKINGS_DB.append(booking_record)
             
             # --- START DYNAMIC QR CODE ATTACHMENT ---
-            # Automatically detects your domain (works on local machine and Render)
             base_url = request.host_url.rstrip('/') 
-
-            # Build the link that will be stored in the QR code
             checkin_link = f"{base_url}/scan/{booking_id}"
-
-            # Safely encode the link and call the QR generator API
             encoded_link = urllib.parse.quote(checkin_link)
             qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={encoded_link}"
             # --- END DYNAMIC QR CODE ATTACHMENT ---
 
-            # Send the email with all the details
+            # Send the email validation with all execution logs
             send_confirmation_email(
                 guest_email, 
                 guest_name, 
@@ -214,7 +220,11 @@ def book():
                 special_notes
             )
             
-            flash(f"Success! A confirmation email has been sent to {guest_email}.", "success")
+            # Flash tracking metric note block
+            flash(f"Success! A confirmation receipt has been generated for {guest_name}.", "success")
+            
+            # --- REDIRECT DIRECTLY TO THE RECEIPT SUMMARY PAGE ---
+            return redirect(url_for('view_receipt', booking_id=booking_id))
 
     # --- 4. Render the Page ---
     return render_template('booking.html', 
@@ -497,11 +507,72 @@ def admin_unlock():
     session['admin_logged_in'] = True
     return "Admin Access Granted!"
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('home'))
+@app.route('/my-bookings')
+def my_bookings():
+    # Security check: Ensure the user is actually logged in
+    if 'user' not in session:
+        flash("Please log in to view your reservations.", "warning")
+        return redirect(url_for('login'))
+    
+    user_email = session['user']
+    
+    # Filter active bookings belonging to this specific user email
+    user_active = [b for b in BOOKINGS_DB if b.get('email') == user_email]
+    
+    # Filter past/completed bookings belonging to this specific user email
+    user_past = [h for h in BOOKING_HISTORY if h.get('email') == user_email]
+    
+    return render_template('my_bookings.html', active_bookings=user_active, past_bookings=user_past)
 
+@app.route('/cancel-booking/<booking_id>', methods=['POST'])
+def customer_cancel_booking(booking_id):
+    if 'user' not in session:
+        flash("Please log in first.", "danger")
+        return redirect(url_for('login'))
+        
+    user_email = session['user']
+    booking_to_remove = None
+    
+    # Find the booking belonging to this user
+    for b in BOOKINGS_DB:
+        if str(b.get('id')) == str(booking_id) and b.get('email') == user_email:
+            booking_to_remove = b
+            break
+            
+    if booking_to_remove:
+        BOOKINGS_DB.remove(booking_to_remove)
+        flash(f"Reservation {booking_id} has been cancelled successfully.", "success")
+    else:
+        flash("Booking not found or unauthorized.", "danger")
+        
+    return redirect(url_for('my_bookings'))
+
+# 1. Change the URL rule to match your booking redirect path ('receipt')
+@app.route('/receipt/<booking_id>')
+def receipt(booking_id): # <--- Changed function name from view_receipt to receipt
+    if 'user' not in session:
+        flash("Please log in to view receipts.", "danger")
+        return redirect(url_for('login'))
+        
+    user_email = session['user']
+    
+    # 2. Search in active bookings first 
+    booking = next((b for b in BOOKINGS_DB if str(b.get('id')) == str(booking_id)), None)
+    
+    # 3. If not found, search in past completed history
+    if not booking:
+        booking = next((h for h in BOOKING_HISTORY if str(h.get('id')) == str(booking_id)), None)
+        
+    if not booking:
+        return "Receipt not found in our resort databases.", 404
+        
+    # 4. SECURITY CHECK: Ensure the logged-in user owns this booking record
+    # (Using .lower() prevents simple capitalization mismatches from breaking your checks!)
+    if booking.get('email', '').strip().lower() != user_email.strip().lower():
+        return "Unauthorized access to this reservation profile record.", 403
+
+    # 5. RENDER THE RECEIPT VOUCHER CANVAS
+    return render_template('receipt.html', booking=booking)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
