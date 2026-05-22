@@ -8,29 +8,6 @@ import random
 import requests # Ensure this is at the top of your app.py
 import requests
 from datetime import datetime
-import json
-import os
-
-import tempfile
-DB_FILE = os.path.join(tempfile.gettempdir(), 'bookings.json')
-# --- ROBUST DATA LOADING ---
-def load_data():
-    if not os.path.exists(DB_FILE):
-        return []
-    try:
-        with open(DB_FILE, 'r') as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"CRITICAL ERROR LOADING JSON: {e}")
-        return []
-
-def save_data(data):
-    try:
-        # Use a temporary path or ensure the directory exists
-        with open(DB_FILE, 'w') as f:
-            json.dump(data, f, indent=4)
-    except Exception as e:
-        print(f"FAILED TO SAVE DATA: {e}") # Don't crash, just log it!
 
 # Global storage
 BOOKINGS_DB = load_data()
@@ -131,43 +108,22 @@ from flask import render_template, request, flash, redirect, url_for
 
 @app.route('/book', methods=['GET', 'POST'])
 def book():
-    # 1. ALWAYS RELOAD DATA FROM FILE (Essential for Render)
-    # Don't rely on the global variable which clears on restart
-    all_bookings = load_data() 
-    
-    # --- Weather Fetching (Non-blocking) ---
-    weather_rec = {"text": "Welcome back!", "icon": "heart", "temp": "30"}
-    try:
-        api_key = "bc58679904d9c02d137021c3272d3f9e"
-        url = f"http://api.openweathermap.org/data/2.5/weather?q=Nasugbu&appid={api_key}&units=metric"
-        response = requests.get(url, timeout=2) # Timeout ensures no 502 error here
-        if response.status_code == 200:
-            data = response.json()
-            temp = round(data['main']['temp'])
-            weather_rec = {"text": "Weather looks great!", "icon": "sun", "temp": temp}
-    except Exception as e:
-        print(f"Weather API skipped: {e}")
-
-    # Calculate availability based on the fresh data
+    # Calculate availability
     availability = {rid: r['total_inventory'] for rid, r in ROOM_PRICES.items()}
-    for b in all_bookings:
+    for b in BOOKINGS_DB:
         for rid, r in ROOM_PRICES.items():
             if b['room'] == r['name']:
                 availability[rid] -= 1
 
-    # --- Handling the Booking Submission ---
     total_cost = 0
     days = 0
-    selected_room_id = None
     qr_code_url = None
 
     if request.method == 'POST':
-        guest_name = request.form.get('guest_name', '')
+        room_type = request.form.get('room_type')
         check_in = request.form.get('check_in')
         check_out = request.form.get('check_out')
-        room_type = request.form.get('room_type')
         
-        # FIX: Ensure dates are parsed correctly or redirect
         try:
             d_in = datetime.strptime(check_in, "%Y-%m-%d")
             d_out = datetime.strptime(check_out, "%Y-%m-%d")
@@ -175,41 +131,23 @@ def book():
         except:
             days = 0
 
-        # ... (rest of your request.form.get variables) ...
-
         if request.form.get('confirm_booking') == 'true':
-            if availability.get(room_type, 0) <= 0:
-                flash("Sorry, that room is fully booked!", "danger")
-                return redirect(url_for('book'))
-
-            booking_id = f"ELR-{1001 + len(all_bookings)}"
-            
-            # FIX: Properly store dates
+            booking_id = f"ELR-{1001 + len(BOOKINGS_DB)}"
             booking_record = {
                 "id": booking_id, 
-                "name": guest_name,
-                "check_in": check_in, # Saved correctly now
+                "name": request.form.get('guest_name'),
+                "email": request.form.get('guest_email'),
+                "check_in": check_in,
                 "check_out": check_out,
                 "room": ROOM_PRICES[room_type]['name'],
-                # ... (rest of your dict) ...
+                "total_paid": (ROOM_PRICES[room_type]['price'] * days),
+                "status": "Confirmed"
             }
-            
-            # ADD DATA
-            all_bookings.append(booking_record)
-            
-            # SAVE DATA
-            if save_data(all_bookings):
-                # Only proceed if save was successful
-                try:
-                    send_confirmation_email(...) # WARNING: If this takes >30s, it WILL cause 502
-                except:
-                    print("Email failed, but booking saved.")
-                    
-                return redirect(url_for('view_receipt', booking_id=booking_id))
-            else:
-                flash("System error saving booking.", "danger")
+            BOOKINGS_DB.append(booking_record)
+            send_confirmation_email(booking_record['email'], booking_record['name'], booking_id, booking_record['room'], booking_record['total_paid'], "")
+            return redirect(url_for('view_receipt', booking_id=booking_id))
 
-    return render_template('booking.html', ...)
+    return render_template('booking.html', availability=availability, ROOM_PRICES=ROOM_PRICES)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
