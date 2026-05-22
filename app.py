@@ -10,10 +10,6 @@ import requests
 from datetime import datetime
 import json
 import os
-from flask import *          # ✓ Needs Flask in requirements
-from flask_sqlalchemy import * # ✓ Needs flask-sqlalchemy
-from flask_mail import *     # ✓ Needs flask-mail
-import requests
 
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bookings.json')
 # --- ROBUST DATA LOADING ---
@@ -526,43 +522,27 @@ def scan_qr(booking_id):
 
     except Exception as e:
         return f"CRASH: {e}", 500
-    
 @app.route('/admin/scan-action', methods=['POST'])
 def scan_action():
-    try:
-        data = request.get_json()
-        booking_id = data.get('booking_id')
-        
-        # Get the booking from database
-        booking = Booking.query.get(booking_id)  # Adjust based on your model
-        
-        if not booking:
-            return jsonify({'message': 'Booking not found!'}), 404
-        
-        # Check current status and toggle
-        if booking.status == 'checked_in':
-            # Check out
-            booking.check_out_time = datetime.now()
-            booking.status = 'checked_out'
-            db.session.commit()
-            return jsonify({'message': f'Guest {booking.guest_name} checked out successfully!'}), 200
-        else:
-            # Check in
-            booking.check_in_time = datetime.now()
-            booking.status = 'checked_in'
-            db.session.commit()
-            return jsonify({'message': f'Guest {booking.guest_name} checked in successfully!'}), 200
-        
-    except Exception as e:
-        return jsonify({'message': f'Error: {str(e)}'}), 500
-
-@app.route('/admin/qrscanner')
-def admin_qrscanner():
-    # Check if admin is logged in
-    if not session.get('admin_logged_in'):
-        return redirect('/admin/login')
+    # 1. Safely get JSON data
+    data = request.get_json()
     
-    return render_template('admin_scanner.html')
+    # 2. Check if data was actually received
+    if not data:
+        return jsonify({'message': 'Error: No data received or invalid JSON'}), 400
+    
+    # 3. Safely get the booking ID
+    booking_id = data.get('booking_id')
+    
+    if not booking_id:
+        return jsonify({'message': 'Error: Missing booking_id'}), 400
+
+    # --- PERFORM YOUR LOGIC HERE ---
+    # e.g., Update your database using booking_id
+    print(f"DEBUG: Processing scan for: {booking_id}")
+    
+    # 4. Return JSON, NOT an HTML template
+    return jsonify({'message': 'Check-in successful!', 'id': booking_id}), 200
 
 @app.route('/admin/unlock-secret')
 def admin_unlock():
