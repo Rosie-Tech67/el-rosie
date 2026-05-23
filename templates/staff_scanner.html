@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Staff Quick Scan</title>
+    <script src="{{ url_for('static', filename='js/html5-qrcode.min.js') }}"></script>
+    <style>
+        body { text-align: center; font-family: sans-serif; background: #fbf9f6; }
+        #reader { width: 500px; margin: 20px auto; border: 2px solid #705335; }
+    </style>
+</head>
+<body>
+    <h1>Staff Quick Scan</h1>
+    <div id="reader"></div>
+    <p id="result">Point your phone camera at the QR code...</p>
+
+    <script>
+        function onScanSuccess(decodedText, decodedResult) {
+            // Stop scanning once we find a code to prevent multiple "beeps" or requests
+            html5QrcodeScanner.clear();
+            
+            const bookingId = decodedText.split('/').pop();
+            
+            fetch('/api/quick-scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ booking_id: bookingId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                document.getElementById('result').innerText = data.message;
+                // Optional: Reload the page after 3 seconds to scan the next guest
+                setTimeout(() => location.reload(), 3000);
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Error processing scan.");
+            });
+        }
+
+        // Configuration: 
+        // 1. Added 'facingMode' to force the Back Camera (essential for phones!)
+        // 2. Added 'qrbox' to ensure the camera focuses on the middle of the screen
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+            fps: 10, 
+            qrbox: {width: 250, height: 250},
+            facingMode: { exact: "environment" } 
+        });
+
+        html5QrcodeScanner.render(onScanSuccess);
+    </script>
+</body>
+</html>

@@ -1,18 +1,18 @@
 [
     {
+        "id": "ELR-1001",
+        "name": "Rose",
+        "phone": "09516933803",
+        "email": "moi@gmail.com",
         "check_in": null,
         "check_out": null,
-        "email": "moi@gmail.com",
-        "guests": "Adults: 1, Children: 0",
-        "id": "ELR-1001",
-        "name": "Moises Abellera",
-        "notes": "",
-        "payment_account": "N/A",
-        "payment_method": "Cash",
-        "payment_reference": "N/A",
-        "phone": "09676767676",
         "room": "Deluxe Bungalow: A private retreat (\u20b13500)",
+        "guests": "Adults: 1, Children: 0",
+        "total_paid": 14050,
         "status": "Pending Payment",
-        "total_paid": 14000
+        "notes": "",
+        "payment_method": "Cash",
+        "payment_account": "N/A",
+        "payment_reference": "N/A"
     }
 ]

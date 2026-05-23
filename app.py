@@ -5,9 +5,33 @@ from flask_mail import Mail, Message
 import urllib.parse
 from datetime import datetime
 import random
-import requests 
+import requests # Ensure this is at the top of your app.py
+import requests
 from datetime import datetime
+import json
+import os
 
+DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bookings.json')
+# --- ROBUST DATA LOADING ---
+def load_data():
+    if not os.path.exists(DB_FILE):
+        return []
+    try:
+        with open(DB_FILE, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"CRITICAL ERROR LOADING JSON: {e}")
+        return []
+
+def save_data(data):
+    try:
+        with open(DB_FILE, 'w') as f:
+            json.dump(data, f, indent=4)
+    except Exception as e:
+        print(f"CRITICAL ERROR SAVING JSON: {e}")
+
+# Global storage
+BOOKINGS_DB = load_data()
 app = Flask(__name__)
 app.secret_key = "el_rosie_secret_secure_key"
 app.permanent_session_lifetime = timedelta(days=31)
@@ -105,46 +129,136 @@ from flask import render_template, request, flash, redirect, url_for
 
 @app.route('/book', methods=['GET', 'POST'])
 def book():
-    # Calculate availability
+    # --- 1. Weather Fetching for Smart Suggestions ---
+    try:
+        # Nasugbu location API call
+        api_key = "bc58679904d9c02d137021c3272d3f9e"
+        url = f"http://api.openweathermap.org/data/2.5/weather?q=Nasugbu&appid={api_key}&units=metric"
+        data = requests.get(url, timeout=5).json()
+        
+        temp = round(data['main']['temp'])
+        condition = data['weather'][0]['main']
+        
+        if condition == "Rain":
+            rec_text = "It's a bit rainy today! Perfect for an indoor Spa session or a cozy day in your bungalow."
+            rec_icon = "cloud-showers-heavy"
+        elif temp > 30:
+            rec_text = "It's a beautiful sunny day! We recommend adding a Pool Pass or an Extra Cooler."
+            rec_icon = "sun"
+        else:
+            rec_text = "The weather is perfect for a sunset walk. Enjoy your stay!"
+            rec_icon = "palmtree"
+            
+        weather_rec = {"text": rec_text, "icon": rec_icon, "temp": temp}
+    except:
+        # Fallback if API fails
+        weather_rec = {"text": "Welcome back! We are ready for your stay.", "icon": "heart", "temp": "30"}
+
+    # --- 2. Room Availability Logic ---
+    total_cost = 0
+    days = 0
+    selected_room_id = None
+    qr_code_url = None
+    
     availability = {rid: r['total_inventory'] for rid, r in ROOM_PRICES.items()}
     for b in BOOKINGS_DB:
         for rid, r in ROOM_PRICES.items():
             if b['room'] == r['name']:
                 availability[rid] -= 1
 
-    total_cost = 0
-    days = 0
-    qr_code_url = None
-
+    # --- 3. Handling the Booking Submission ---
     if request.method == 'POST':
-        room_type = request.form.get('room_type')
+        guest_name = request.form.get('guest_name', '')
+        guest_phone = request.form.get('guest_phone', '')
+        guest_email = request.form.get('guest_email', '')
         check_in = request.form.get('check_in')
         check_out = request.form.get('check_out')
+        room_type = request.form.get('room_type')
+        addons = request.form.getlist('addons')
+        adults = request.form.get('adults', '1')
+        children = request.form.get('children', '0')
+        special_notes = request.form.get('special_notes', 'None') 
         
+        payment_method = request.form.get('payment_method', 'GCash')
+        
+        # EXTRACT REFERENCE FIELDS: Grabs details if transaction happened via online gateway
+        payment_account = request.form.get('payment_account', 'N/A') if payment_method != 'Cash' else 'N/A'
+        payment_reference = request.form.get('payment_reference', 'N/A') if payment_method != 'Cash' else 'N/A'
+
+        selected_room_id = room_type
+
         try:
-            d_in = datetime.strptime(check_in, "%Y-%m-%d")
-            d_out = datetime.strptime(check_out, "%Y-%m-%d")
-            days = (d_out - d_in).days
-        except:
+            date_in = datetime.strptime(check_in, "%Y-%m-%d")
+            date_out = datetime.strptime(check_out, "%Y-%m-%d")
+            days = (date_out - date_in).days
+        except: 
             days = 0
 
+        if room_type in ROOM_PRICES and days > 0:
+            total_cost = (ROOM_PRICES[room_type]['price'] * days) + (len(addons) * 50)
+
+        # Final Confirmation Logic
         if request.form.get('confirm_booking') == 'true':
+            if availability.get(room_type, 0) <= 0:
+                flash("Sorry, that room type is fully booked!", "danger")
+                return redirect(url_for('book'))
+
+            # Generate unique custom serial token key
             booking_id = f"ELR-{1001 + len(BOOKINGS_DB)}"
+            initial_status = "Pending Payment" if payment_method == "Cash" else "Paid / Verified"
+            
             booking_record = {
                 "id": booking_id, 
-                "name": request.form.get('guest_name'),
-                "email": request.form.get('guest_email'),
-                "check_in": check_in,
-                "check_out": check_out,
+                "name": guest_name, 
+                "phone": guest_phone,
+                "email": guest_email, 
+                "check_in": None, 
+                "check_out": None,
                 "room": ROOM_PRICES[room_type]['name'],
-                "total_paid": (ROOM_PRICES[room_type]['price'] * days),
-                "status": "Confirmed"
+                "guests": f"Adults: {adults}, Children: {children}",
+                "total_paid": total_cost, 
+                "status": initial_status,
+                "notes": special_notes,
+                "payment_method": payment_method,
+                
+                # DATA STORAGE: Saves reference details into your active dictionary row
+                "payment_account": payment_account,
+                "payment_reference": payment_reference
             }
             BOOKINGS_DB.append(booking_record)
-            send_confirmation_email(booking_record['email'], booking_record['name'], booking_id, booking_record['room'], booking_record['total_paid'], "")
+            save_data(BOOKINGS_DB) # <--- THIS LINE IS MISSING
+        
+            base_url = request.host_url.rstrip('/') 
+            checkin_link = f"{base_url}/scan/{booking_id}"
+            encoded_link = urllib.parse.quote(checkin_link)
+            qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={encoded_link}"
+            # --- END DYNAMIC QR CODE ATTACHMENT ---
+
+            # Send the email validation with all execution logs
+            send_confirmation_email(
+                guest_email, 
+                guest_name, 
+                booking_id, 
+                booking_record['room'], 
+                total_cost, 
+                special_notes
+            )
+            
+            # Flash tracking metric note block
+            flash(f"Success! A confirmation receipt has been generated for {guest_name}.", "success")
+            
+            # --- REDIRECT DIRECTLY TO THE RECEIPT SUMMARY PAGE ---
             return redirect(url_for('view_receipt', booking_id=booking_id))
 
-    return render_template('booking.html', availability=availability, ROOM_PRICES=ROOM_PRICES)
+    # --- 4. Render the Page ---
+    return render_template('booking.html', 
+                           room_prices=ROOM_PRICES, 
+                           total_cost=total_cost, 
+                           days=days, 
+                           selected_room=selected_room_id, 
+                           qr_code_url=qr_code_url,
+                           availability=availability,
+                           weather=weather_rec)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -408,27 +522,11 @@ def scan_qr(booking_id):
 
     except Exception as e:
         return f"CRASH: {e}", 500
-@app.route('/admin/scan-action', methods=['POST'])
-def scan_action():
-    # 1. Safely get JSON data
-    data = request.get_json()
     
-    # 2. Check if data was actually received
-    if not data:
-        return jsonify({'message': 'Error: No data received or invalid JSON'}), 400
-    
-    # 3. Safely get the booking ID
-    booking_id = data.get('booking_id')
-    
-    if not booking_id:
-        return jsonify({'message': 'Error: Missing booking_id'}), 400
-
-    # --- PERFORM YOUR LOGIC HERE ---
-    # e.g., Update your database using booking_id
-    print(f"DEBUG: Processing scan for: {booking_id}")
-    
-    # 4. Return JSON, NOT an HTML template
-    return jsonify({'message': 'Check-in successful!', 'id': booking_id}), 200
+@app.route('/admin/scanner')
+def admin_scanner():
+    # This renders the camera interface for the admin
+    return render_template('admin_scanner.html')
 
 @app.route('/admin/unlock-secret')
 def admin_unlock():
@@ -484,17 +582,53 @@ def customer_cancel_booking(booking_id):
         
     return redirect(url_for('my_bookings'))
 
-# 1. Change the URL rule to match your booking redirect path ('receipt')
+
+
+
+
+# --- FIX 2: Unlock Receipts ---
 @app.route('/view_receipt/<booking_id>')
 def view_receipt(booking_id):
-    # If the database is empty or the ID is not found, 
-    # does this code crash here?
-    data = load_data() 
-    booking = next((item for item in data if item['id'] == booking_id), None)
+    all_bookings = load_data()
+    # We remove the "unauthorized" check entirely for your demo
+    booking = next((b for b in all_bookings if str(b['id']).strip() == str(booking_id).strip()), None)
     
     if not booking:
-        return "Booking not found", 404 # Should be a clear error, not a crash
+        return "Booking record missing in file.", 404
         
+    # Just render the receipt. No questions asked.
     return render_template('receipt.html', booking=booking)
+
+@app.route('/api/quick-scan', methods=['POST'])
+def quick_scan():
+    data = request.json
+    booking_id = data.get('booking_id')
+    
+    # Logic: Find the booking
+    bookings = load_bookings()
+    booking = next((b for b in bookings if str(b['id']) == str(booking_id)), None)
+    
+    if not booking:
+        return jsonify({"message": "Booking not found!"})
+    
+    # Logic: Toggle status automatically
+    if booking['status'] == 'Confirmed':
+        booking['status'] = 'Checked-in'
+        booking['check_in_time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        msg = f"Guest {booking['name']} successfully Checked-in!"
+    elif booking['status'] == 'Checked-in':
+        booking['status'] = 'Checked-out'
+        booking['check_out_time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        msg = f"Guest {booking['name']} successfully Checked-out!"
+    else:
+        msg = "Guest is already processed."
+        
+    save_bookings(bookings)
+    return jsonify({"message": msg})
+
+@app.route('/staff_scanner')
+def staff_scanner():
+    return render_template('staff_scanner.html')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
