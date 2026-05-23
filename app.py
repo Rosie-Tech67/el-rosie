@@ -11,27 +11,21 @@ from datetime import datetime
 import json
 import os
 
-DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bookings.json')
-# --- ROBUST DATA LOADING ---
-def load_data():
-    if not os.path.exists(DB_FILE):
-        return []
-    try:
-        with open(DB_FILE, 'r') as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"CRITICAL ERROR LOADING JSON: {e}")
-        return []
 
-def save_data(data):
-    try:
-        with open(DB_FILE, 'w') as f:
-            json.dump(data, f, indent=4)
-    except Exception as e:
-        print(f"CRITICAL ERROR SAVING JSON: {e}")
+def load_bookings():
+    # Make sure 'bookings.json' is the correct name of your file
+    with open('bookings.json', 'r') as file:
+        return json.load(file)
+
+def save_bookings(bookings):
+    # This is also needed so your changes actually stick!
+    with open('bookings.json', 'w') as file:
+        json.dump(bookings, file, indent=4)
+
+DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bookings.json')
 
 # Global storage
-BOOKINGS_DB = load_data()
+BOOKINGS_DB = load_bookings()
 app = Flask(__name__)
 app.secret_key = "el_rosie_secret_secure_key"
 app.permanent_session_lifetime = timedelta(days=31)
@@ -226,7 +220,7 @@ def book():
                 "payment_reference": payment_reference
             }
             BOOKINGS_DB.append(booking_record)
-            save_data(BOOKINGS_DB) # <--- THIS LINE IS MISSING
+            save_bookings(BOOKINGS_DB) # <--- THIS LINE IS MISSING
         
             base_url = request.host_url.rstrip('/') 
             checkin_link = f"{base_url}/scan/{booking_id}"
@@ -589,7 +583,7 @@ def customer_cancel_booking(booking_id):
 # --- FIX 2: Unlock Receipts ---
 @app.route('/view_receipt/<booking_id>')
 def view_receipt(booking_id):
-    all_bookings = load_data()
+    all_bookings = load_bookings()
     # We remove the "unauthorized" check entirely for your demo
     booking = next((b for b in all_bookings if str(b['id']).strip() == str(booking_id).strip()), None)
     
@@ -599,34 +593,46 @@ def view_receipt(booking_id):
     # Just render the receipt. No questions asked.
     return render_template('receipt.html', booking=booking)
 
+
 @app.route('/api/quick-scan', methods=['POST'])
 def quick_scan():
     data = request.json
-    booking_id = data.get('booking_id')
+    booking_id = str(data.get('booking_id'))
     
-    # Logic: Find the booking
-    bookings = load_bookings()
-    booking = next((b for b in bookings if str(b['id']) == str(booking_id)), None)
+    # Load your two main data files
+    bookings = load_bookings('bookings.json')
+    past_stays = load_bookings('past_stays.json')
+    
+    # Find the booking in current bookings
+    booking = next((b for b in bookings if str(b['id']) == booking_id), None)
     
     if not booking:
-        return jsonify({"message": "Booking not found!"})
+        return jsonify({"message": "Booking not found in active list!"})
     
-    # Logic: Toggle status automatically
+    # LOGIC: If Confirmed, mark as Checked-In
     if booking['status'] == 'Confirmed':
         booking['status'] = 'Checked-in'
         booking['check_in_time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        msg = f"Guest {booking['name']} successfully Checked-in!"
+        save_bookings('bookings.json', bookings)
+        return jsonify({"message": f"Guest {booking['name']} successfully Checked-in!"})
+    
+    # LOGIC: If Checked-in, move to Past Stays
     elif booking['status'] == 'Checked-in':
         booking['status'] = 'Checked-out'
         booking['check_out_time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        msg = f"Guest {booking['name']} successfully Checked-out!"
-    else:
-        msg = "Guest is already processed."
         
-    save_bookings(bookings)
-    return jsonify({"message": msg})
-
+        # Move to past_stays list
+        past_stays.append(booking)
+        bookings.remove(booking)
+        
+        save_bookings('bookings.json', bookings)
+        save_bookings('past_stays.json', past_stays)
+        
+        return jsonify({"message": f"Guest {booking['name']} successfully Checked-out and moved to history!"})
+        
+    return jsonify({"message": "Guest already processed."})
 @app.route('/staff_scanner')
+
 def staff_scanner():
     return render_template('staff_scanner.html')
 

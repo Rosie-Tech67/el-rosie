@@ -5,47 +5,71 @@
     <script src="{{ url_for('static', filename='js/html5-qrcode.min.js') }}"></script>
     <style>
         body { text-align: center; font-family: sans-serif; background: #fbf9f6; }
-        #reader { width: 500px; margin: 20px auto; border: 2px solid #705335; }
+        #reader { width: 100%; max-width: 500px; margin: 20px auto; border: 2px solid #705335; }
+        .btn { padding: 15px 30px; margin: 10px; border: none; cursor: pointer; color: white; font-size: 16px; border-radius: 5px; }
     </style>
 </head>
 <body>
     <h1>Staff Quick Scan</h1>
+
     <div id="reader"></div>
+
+    <div id="control-panel" style="display:none; text-align:center; padding: 20px;">
+        <h3 id="scanned-id">Booking ID: ...</h3>
+        <p>Select action for this guest:</p>
+        <button class="btn" onclick="processAction('check-in')" style="background:green;">Check-In Guest</button>
+        <button class="btn" onclick="processAction('check-out')" style="background:red;">Check-Out Guest</button>
+        <br>
+        <button class="btn" onclick="location.reload()" style="background:#555;">Cancel/Rescan</button>
+    </div>
+
     <p id="result">Point your phone camera at the QR code...</p>
 
     <script>
+        let currentBookingId = "";
+        
+        // Initialize Scanner
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+            fps: 10, 
+            qrbox: {width: 250, height: 250},
+            facingMode: "environment" 
+        });
+
         function onScanSuccess(decodedText, decodedResult) {
-            // Stop scanning once we find a code to prevent multiple "beeps" or requests
             html5QrcodeScanner.clear();
             
-            const bookingId = decodedText.split('/').pop();
+            // Extracts the last part of a URL or raw ID
+            currentBookingId = decodedText.split('/').filter(Boolean).pop();
             
-            fetch('/api/quick-scan', {
+            document.getElementById('scanned-id').innerText = "Booking ID: " + currentBookingId;
+            document.getElementById('control-panel').style.display = 'block';
+            document.getElementById('result').innerText = "Scan successful. Please select action.";
+        }
+
+        function processAction(action) {
+            document.getElementById('result').innerText = "Processing...";
+            
+            fetch("{{ url_for('quick_scan') }}", {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ booking_id: bookingId })
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() if csrf_token else "" }}'
+                },
+                body: JSON.stringify({ 
+                    booking_id: currentBookingId, 
+                    status: action 
+                })
             })
             .then(res => res.json())
             .then(data => {
                 alert(data.message);
-                document.getElementById('result').innerText = data.message;
-                // Optional: Reload the page after 3 seconds to scan the next guest
-                setTimeout(() => location.reload(), 3000);
+                location.reload(); 
             })
             .catch(err => {
-                console.error(err);
-                alert("Error processing scan.");
+                console.error("Fetch Error:", err);
+                alert("Server Error. Check terminal logs.");
             });
         }
-
-        // Configuration: 
-        // 1. Added 'facingMode' to force the Back Camera (essential for phones!)
-        // 2. Added 'qrbox' to ensure the camera focuses on the middle of the screen
-        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-            fps: 10, 
-            qrbox: {width: 250, height: 250},
-            facingMode: { exact: "environment" } 
-        });
 
         html5QrcodeScanner.render(onScanSuccess);
     </script>
